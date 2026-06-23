@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/user.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // ─── Protect Route (must be logged in) ───────────────────────────
 export const protect = async (req, res, next) => {

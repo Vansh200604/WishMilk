@@ -2,6 +2,8 @@ import nodemailer from "nodemailer";
 import twilio from "twilio";
 import axios from "axios";
 import Notification from "../models/notification.js";
+import dotenv from "dotenv";
+dotenv.config();
 
 // ─── Nodemailer Setup ────────────────────────────────────────────────────────
 const transporter = nodemailer.createTransport({
