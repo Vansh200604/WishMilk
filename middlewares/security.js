@@ -1,5 +1,5 @@
 import helmet from 'helmet';
-import core from 'cors';
+import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import dotenv from 'dotenv';
@@ -10,8 +10,8 @@ export const helmetMiddleware = helmet();
 
 // CORS is used to allow cross-origin requests from different domains. 
 //example: if your frontend is hosted on a different domain than your backend, you can use CORS to allow requests from that domain.
-export const coreMiddleware = core({
-    origin: process.env.CLIENT_URL || '*',
+export const corsMiddleware = cors({
+    origin: process.env.CLIENT_URL,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
@@ -26,6 +26,16 @@ export const globalRateLimiter = rateLimit({
     standardHeaders : true, // Return rate limit info in the `RateLimit-*` headers
     legacyHeaders : false, // Disable the `X-RateLimit-*` headers
 })
+
+// auth rate limiter - 10 auth requests per 15 minutes
+//this is use in /login, /register, /forgot-password, /reset-password, /verify-email, /resend-verification-email routes to prevent brute force attacks.
+export const authRateLimiter = rateLimit({
+    windowMs : 15 * 60 * 1000, // 15 minutes
+    max : 10, // limit each IP to 10 requests per windowMs
+    message : 'Too many auth requests from this IP, please try again after 15 minutes',
+    standardHeaders : true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders : false, // Disable the `X-RateLimit-*` headers
+});
 
 // OTP rate limiter - 5 OTP requests per 15 minutes
 export const otpRateLimiter = rateLimit({
