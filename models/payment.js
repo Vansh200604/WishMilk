@@ -1,0 +1,62 @@
+import mongoose from 'mongoose';
+
+const paymentSchema = new mongoose.Schema({
+    orderId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Order',
+        required: true,
+        unique: true,
+    },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+    amount: {
+        type: Number,
+        required: true,
+        min : 0
+    },
+    paymentMethod: {
+        type: String,
+        enum: ['credit_card', 'debit_card', 'net_banking', 'upi', 'cash_on_delivery', 'paypal'],
+        required: true 
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['pending', 'completed', 'failed', 'refunded'],
+        default: 'pending'
+    },
+
+    // razorPay specific fields
+    razorPayOrderId: {
+        type: String,
+    },
+    razorPayPaymentId: {
+        type: String,
+    },
+    razorPaySignature: {
+        type: String,
+    },
+
+    // refund tracking fields
+    refundId: {
+        type: String,
+    },
+    refundAmount: {
+        type: Number,
+        min : 0,
+    },
+    refundAt: {
+        type: Date,
+    },
+
+    // when payment was successfully completed
+    paidAt: {
+        type: Date,
+    }
+
+}, { timestamps: true });
+
+const Payment = mongoose.model('Payment', paymentSchema);
+export default Payment;
