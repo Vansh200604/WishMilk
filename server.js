@@ -1,6 +1,7 @@
 import express from 'express';
 import "dotenv/config";
 import connectDB from './config/db.js';
+import mongoSantize from 'express-mongo-sanitize';
 
 // ─── Security ─────────────────────────────────────────────────────
 import {
@@ -41,7 +42,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ─── NoSQL Injection Protection ────────────────────────────────────
-app.use(mongoSanitizeMiddleware);
+// app.use(mongoSanitizeMiddleware);
 
 // ─── Database ──────────────────────────────────────────────────────
 connectDB();

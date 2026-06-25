@@ -115,9 +115,11 @@ const orderSchema = new mongoose.Schema({
     },
     isSubscriptionOrder: {
         type: Boolean,
-        default: false,               
+        default: false,                         
+    },
+    subscription: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Subscription"            
+        ref: "Subscription"
     },
     cancelReason: {
         type: String                   

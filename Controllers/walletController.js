@@ -79,7 +79,7 @@ export const addMoney = async(req, res) => {
 
 //Redeem loyalty points into wallet balance
 //route: POST /api/wallet/redeem-points
-export const redeemPoints = async(req, res) => {
+export const redeemLoyaltyPoints  = async(req, res) => {
     try{
         const {points} = req.body;
         if(!points || points <= 0){

@@ -1,5 +1,5 @@
 import Delivery from '../models/delivery.js';
-import Deivery from '../models/deliveryModel.js';
+
 
 // Create a new delivery
 export const createDelivery = async(req, res) => {
