@@ -51,7 +51,7 @@ export const getDeliveryByOrder = async (req, res) => {
  
 // @desc    Update delivery status and append to timeline
 // @route   PATCH /api/delivery/:id/status
-// @access  Private (dairy_owner / admin)
+// @access  Private (dairyOwner / admin)
 export const updateDeliveryStatus = async (req, res) => {
     try {
         const { status, message, failureReason } = req.body;

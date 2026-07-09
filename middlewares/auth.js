@@ -53,7 +53,7 @@ export const restrictTo = (...roles) => {
 
 // ─── Restrict to Dairy Owner ──────────────────────────────────────
 export const isDairyOwner = (req, res, next) => {
-    if (req.user.role !== 'dairy_owner') {
+    if (req.user.role !== 'dairyOwner') {   //change bug dairy_owner to dairyOwner
         return res.status(403).json({
             success: false,
             message: 'Access denied. Only dairy owners can perform this action'

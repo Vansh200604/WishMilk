@@ -18,7 +18,7 @@ export const createMilk = async (req, res) => {
             return res.status(403).json({ success: false, message: "Dairy not found or not authorized" });
         }
 
-        const milk = await Milk.create({ name, type, fatPercentage, packaging, unit, inStock, image });
+        const milk = await Milk.create({ name, type, fatPercentage, packaging, unit, inStock, image, dairyId });    //change bug DairyId
 
         // Push milk reference into the dairy's milkTypes array if not already present
         if (!dairy.milkTypes.includes(milk._id)) {
@@ -43,6 +43,7 @@ export const getAllMilk = async (req, res) => {
         if (type)       filter.type       = type;
         if (packaging)  filter.packaging  = packaging;
         if (unit)       filter.unit       = unit;
+        if (diaryId)    filter.dairyId    = diaryId;     //changing bug
         if (inStock !== undefined) filter.inStock = inStock === "true";
         if (minFat || maxFat) {
             filter.fatPercentage = {};
@@ -80,13 +81,13 @@ export const getMilkById = async (req, res) => {
 // @access  Public
 export const getMilkByDairy = async (req, res) => {
     try {
-        const dairy = await Dairy.findById(req.params.dairyId).populate("milkTypes");
+        const dairy = await Dairy.findById(req.params.dairyId);
 
         if (!dairy) {
             return res.status(404).json({ success: false, message: "Dairy not found" });
         }
-
-        res.status(200).json({ success: true, count: dairy.milkTypes.length, data: dairy.milkTypes });
+        const milk = await Milk.find({ dairyId: req.params.dairyId }).sort({ createdAt: -1 });    // change bug
+        res.status(200).json({ success: true, count: milk.length, data: milk });    // change bug
     } catch (error) {
         res.status(500).json({ success: false, message: "Error fetching milk for dairy", error: error.message });
     }
@@ -98,7 +99,7 @@ export const getMilkByDairy = async (req, res) => {
 export const updateMilk = async (req, res) => {
     try {
         // Verify the requester owns a dairy that has this milk
-        const dairy = await Dairy.findOne({ owner: req.user._id, milkTypes: req.params.id });
+        const dairy = await Dairy.findOne({ owner: req.user._id, milkTypes: req.params.id });     //want change
         if (!dairy) {
             return res.status(403).json({ success: false, message: "Not authorized to update this milk product" });
         }

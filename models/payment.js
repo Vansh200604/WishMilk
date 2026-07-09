@@ -29,13 +29,13 @@ const paymentSchema = new mongoose.Schema({
     },
 
     // razorPay specific fields
-    razorPayOrderId: {
+    razorpayOrderId: {
         type: String,
     },
-    razorPayPaymentId: {
+    razorpayPaymentId: {
         type: String,
     },
-    razorPaySignature: {
+    razorpaySignature: {
         type: String,
     },
 
@@ -47,7 +47,7 @@ const paymentSchema = new mongoose.Schema({
         type: Number,
         min : 0,
     },
-    refundAt: {
+    refundedAt: {
         type: Date,
     },
 

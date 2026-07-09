@@ -2,6 +2,7 @@ import express from 'express';
 import "dotenv/config";
 import connectDB from './config/db.js';
 import mongoSantize from 'express-mongo-sanitize';
+import cors from 'cors';
 
 // ─── Security ─────────────────────────────────────────────────────
 import {
@@ -46,6 +47,9 @@ app.use(express.urlencoded({ extended: true }));
 
 // ─── Database ──────────────────────────────────────────────────────
 connectDB();
+
+// ─── Frontend CORS Configuration ───────────────────────────────────
+app.use(cors());
 
 const port = 3000;
 
