@@ -9,7 +9,7 @@ import {
     updateOrderStatus,
     linkPaymentToOrder,
 } from "../Controllers/orderController.js";
-import { protect, isDairyOwner, isAdmin } from "../middlewares/auth.js";
+import { protect, isDairyOwner, isAdmin, restrictTo } from "../middlewares/auth.js";
 
 const router = express.Router();
 
@@ -27,6 +27,6 @@ router.patch("/:id/payment",        linkPaymentToOrder);
 router.get("/dairy/:dairyId",       isDairyOwner, getOrdersByDairy);
 
 // Dairy owner or admin
-router.patch("/:id/status",         updateOrderStatus);
+router.patch("/:id/status",         restrictTo("dairyOwner", "admin"), updateOrderStatus);
 
 export default router;

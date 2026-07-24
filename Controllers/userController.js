@@ -76,6 +76,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import sendEmail from "../utils/sendEmail.js";
+import "dotenv/config";
 
 // ─── Helper: Generate JWT Token ───────────────────────────────────
 const generateToken = (id) => {

@@ -29,7 +29,7 @@ export const createMilk = async (req, res) => {
         res.status(201).json({ success: true, message: "Milk product added successfully", data: milk });
     } catch (error) {
         res.status(500).json({ success: false, message: "Error creating milk product", error: error.message });
-    }
+    }   
 };
 
 // @desc    Get all milk products

@@ -1,5 +1,6 @@
 import Order from "../models/order.js";
 import Milk from "../models/milk.js";
+import Dairy from "../models/dairy.js";
 import notificationService from "../services/notificationService.js";
 
 // @desc    Place a new order
@@ -70,7 +71,7 @@ export const getMyOrders = async (req, res) => {
                 .populate("dairy",           "name image phone")
                 .populate("milkType",        "name type packaging unit")
                 .populate("deliveryAddress")
-                .populate("paymentId",       "razorpayPaymentId amount status")
+                // .populate("paymentId",       "razorpayPaymentId amount status") 
                 .sort({ createdAt: -1 })
                 .skip((page - 1) * limit)
                 .limit(Number(limit)),
@@ -79,6 +80,7 @@ export const getMyOrders = async (req, res) => {
 
         res.status(200).json({ success: true, count: orders.length, total, page: Number(page), data: orders });
     } catch (error) {
+        console.error("getMyOrders error:", error);
         res.status(500).json({ success: false, message: "Error fetching orders", error: error.message });
     }
 };
@@ -93,7 +95,7 @@ export const getOrderById = async (req, res) => {
             .populate("milkType",        "name type fatPercentage packaging unit")
             .populate("deliveryAddress")
             .populate("subscription",    "cycle status")
-            .populate("paymentId",       "razorpayPaymentId amount status method paidAt");
+            // .populate("paymentId",       "razorpayPaymentId amount status method paidAt");
 
         if (!order) {
             return res.status(404).json({ success: false, message: "Order not found" });
@@ -201,7 +203,7 @@ export const updateOrderStatus = async (req, res) => {
     try {
         const { status, cancelReason } = req.body;
 
-        const allowedStatuses = ["pending", "confirmed", "out_for_delivery", "delivered", "cancelled"];
+        const allowedStatuses = ["pending", "confirmed", "out-for-delivery", "delivered", "cancelled"];
         if (!allowedStatuses.includes(status)) {
             return res.status(400).json({ success: false, message: "Invalid status value" });
         }
@@ -211,9 +213,21 @@ export const updateOrderStatus = async (req, res) => {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
 
+        // Dairy owners may only update orders placed against their own
+        // dairy — this wasn't being checked anywhere before (route had no
+        // role restriction and the controller had no ownership check).
+        if (req.user.role === "dairyOwner") {
+            const ownsDairy = await Dairy.findOne({ _id: order.dairy, owner: req.user._id });
+            if (!ownsDairy) {
+                return res.status(403).json({ success: false, message: "Not authorized to update this order" });
+            }
+        }
+
         order.status = status;
         if (status === "cancelled" && cancelReason) order.cancelReason = cancelReason;
         await order.save();
+
+        
 
         // Notify user about status change
         const statusMessages = {

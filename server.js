@@ -51,7 +51,7 @@ connectDB();
 // ─── Frontend CORS Configuration ───────────────────────────────────
 app.use(cors());
 
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
 // ─── Routes ────────────────────────────────────────────────────────
 app.use('/api/user',          authRateLimiter, authRouter);
@@ -65,6 +65,12 @@ app.use('/api/milk',          milkRouter);
 app.use('/api/delivery',      deliveryRouter);
 app.use('/api/coupons',       couponRouter);
 app.use('/api/wallet',        walletRouter);
+
+
+app.get('/', (req, res) => res.json({
+    success: true,
+    message: 'Welcome to the WishMilk API' 
+}));
 
 // ─── Health Check ──────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
@@ -80,6 +86,6 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({ success: false, message: err.message || 'Internal Server Error' });
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });

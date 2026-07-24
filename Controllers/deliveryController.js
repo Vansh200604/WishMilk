@@ -1,5 +1,5 @@
 import Delivery from '../models/delivery.js';
-
+import Order from '../models/order.js';
 
 // Create a new delivery
 export const createDelivery = async(req, res) => {
@@ -13,19 +13,19 @@ export const createDelivery = async(req, res) => {
             return res.status(404).json({message: "Order not found"});
         }
 
-        const existing = await Delivery.findOne({orderId});
+        const existing = await Delivery.findOne({order: orderId});
         if(existing){
             return res.status(400).json({message: "Delivery already exists for this order"});
         }
 
         const delivery = await Delivery.create({
             order: orderId,
-            user: order.user,
+            user: order.userId,
             dairy: order.dairy,
             estimatedDelivery,
             timeLine: [{status: 'pending', message: 'Order is received and being prepared'}]
         })
-        res.status(201).json({success:true, message: "Delivery created successfully"});
+        res.status(201).json({success:true, message: "Delivery created successfully", data: delivery});
     }
     catch(error){
         res.status(500).json({success:false, message: "Failed to create delivery", error: error.message});;
@@ -55,7 +55,7 @@ export const getDeliveryByOrder = async (req, res) => {
 export const updateDeliveryStatus = async (req, res) => {
     try {
         const { status, message, failureReason } = req.body;
-        const allowedStatuses = ["pending", "assigned", "picked_up", "out_for_delivery", "delivered", "failed"];
+        const allowedStatuses = ["pending", "assigned", "picked-up", "out-for-delivery", "delivered", "failed"];
  
         if (!allowedStatuses.includes(status)) {
             return res.status(400).json({ success: false, message: "Invalid status" });
@@ -65,7 +65,7 @@ export const updateDeliveryStatus = async (req, res) => {
         if (!delivery) return res.status(404).json({ success: false, message: "Delivery not found" });
  
         delivery.status = status;
-        delivery.timeline.push({ status, message: message || status.replace(/_/g, " "), timestamp: new Date() });
+        delivery.timeLine.push({ status, message: message || status.replace(/-/g, " "), timestamp: new Date() });
  
         if (status === "delivered") {
             delivery.deliveredAt = new Date();
@@ -108,7 +108,7 @@ export const updateLiveLocation = async (req, res) => {
 export const getTimeline = async (req, res) => {
     try {
         const delivery = await Delivery.findById(req.params.id)
-            .select("timeline status estimatedDelivery deliveredAt");
+            .select("timeLine status estimatedDelivery deliveredAt");
         if (!delivery) return res.status(404).json({ success: false, message: "Delivery not found" });
         res.status(200).json({ success: true, data: delivery });
     } catch (error) {

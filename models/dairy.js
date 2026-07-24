@@ -97,26 +97,17 @@ const dairySchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-dairySchema.pre('save', function(next) {
-    const types = this.milkPricing.map(item => item.type);
-    const uniqueTypes = new Set(types);
-
-    if(types.length !== uniqueTypes.size){
-        return next(new Error("Duplicate milk pricing types are not allowed."))
-    }
-    next();
-});
 
 dairySchema.index({ location: "2dsphere" });
 
-// dairySchema.pre('save', function () {
-//     const types = this.milkPricing.map(item => item.type);
-//     const uniqueTypes = new Set(types);
+dairySchema.pre('save', function () {
+    const types = this.milkPricing.map(item => item.type);
+    const uniqueTypes = new Set(types);
 
-//     if (types.length !== uniqueTypes.size) {
-//         throw new Error("Duplicate milk pricing types are not allowed.");
-//     }
-// });
+    if (types.length !== uniqueTypes.size) {
+        throw new Error("Duplicate milk pricing types are not allowed.");
+    }
+});
 
 const Dairy = mongoose.model('Dairy', dairySchema);
 
