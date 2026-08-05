@@ -3,9 +3,15 @@ import "dotenv/config";
 
 const connectDB = async () => {
     try{
-        
-        await mongoose.connect(process.env.MONGO_URI );
-            console.log('Database is connected successfully!');
+        mongoose.connection.on("disconnected", () => {
+            console.log("MongoDB disconnected");
+        });
+
+        mongoose.connection.on("error", (err) => {
+            console.error("MongoDB Error:", err.message);
+        });
+        const connection = await mongoose.connect(process.env.MONGO_URI );
+        console.log('Database is connected successfully!');
         
     }
     catch(err){
@@ -13,4 +19,6 @@ const connectDB = async () => {
         process.exit(1); // Exit the process with failure
     }
 };
+
+
 export default connectDB;

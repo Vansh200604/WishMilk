@@ -17,6 +17,20 @@ const deliverySchema = new mongoose.Schema({
         ref: 'Dairy',
         required: true
     },
+    // Set by the dairy owner when they assign a rider to this delivery.
+    // Not required — a delivery can exist unassigned until someone picks it up.
+    assignedRider: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
+    // False whenever a rider is (auto- or manually) assigned but hasn't
+    // accepted yet. The rider portal treats riderConfirmed: false as "needs
+    // your response" and shows an accept/decline prompt instead of the
+    // normal progress controls.
+    riderConfirmed: {
+        type: Boolean,
+        default: false
+    },
     status: {
         type: String,
         enum: ['pending', 'assigned', 'picked-up', 'out-for-delivery', 'delivered', 'failed'],

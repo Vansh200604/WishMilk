@@ -10,6 +10,7 @@ const milkSchema = new mongoose.Schema({
         enum: ['cow', 'buffalo', 'goat', 'sheep'],
         required: true
     },
+    
     fatPercentage: {
         type: Number,
         min: 0,
@@ -18,7 +19,7 @@ const milkSchema = new mongoose.Schema({
     },
     packaging: {
         type: String,
-        enum: ['bottle', 'packet'],
+        enum: ['bottle', 'packet', 'can'],
         required: true
     },
     unit: {

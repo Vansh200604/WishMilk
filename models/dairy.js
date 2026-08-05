@@ -42,9 +42,9 @@ const dairySchema = new mongoose.Schema({
     },
     milkTypes: [
         {
-            type: String,
-            enum: ['cow', 'buffalo', 'goat', 'sheep'],
-            required: true,
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Milk',
+            required: true
         }
     ],
     milkPricing: [

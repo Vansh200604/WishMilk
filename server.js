@@ -3,6 +3,7 @@ import "dotenv/config";
 import connectDB from './config/db.js';
 import mongoSantize from 'express-mongo-sanitize';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 
 // ─── Security ─────────────────────────────────────────────────────
 import {
@@ -49,12 +50,13 @@ app.use(express.urlencoded({ extended: true }));
 connectDB();
 
 // ─── Frontend CORS Configuration ───────────────────────────────────
-app.use(cors());
+// app.use(cors());
+
 
 const PORT = process.env.PORT || 3000;
 
 // ─── Routes ────────────────────────────────────────────────────────
-app.use('/api/user',          authRateLimiter, authRouter);
+app.use('/api/user',          authRouter);
 app.use('/api/otp',           otpRateLimiter,  otpRouter);
 app.use('/api/dairies',       dairyRouter);
 app.use('/api/reviews',       reviewRouter);

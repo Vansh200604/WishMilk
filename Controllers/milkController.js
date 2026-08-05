@@ -25,10 +25,12 @@ export const createMilk = async (req, res) => {
             dairy.milkTypes.push(milk._id);
             await dairy.save();
         }
+        
 
         res.status(201).json({ success: true, message: "Milk product added successfully", data: milk });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error creating milk product", error: error.message });
+        console.error("create milk error:", error);
+        res.status(500).json({ success: false, message: "Error creating milk product", error: error.message, stack: error.stack });
     }   
 };
 
@@ -153,7 +155,12 @@ export const toggleMilkStock = async (req, res) => {
 // @access  Private (dairy owner)
 export const deleteMilk = async (req, res) => {
     try {
+        console.log("Deleting milk:", req.params.id);
+        console.log("Logged in owner:", req.user._id);
         const dairy = await Dairy.findOne({ owner: req.user._id, milkTypes: req.params.id });
+
+        console.log("Dairy:", dairy);
+        console.log("milkTypes:", dairy?.milkTypes);
         if (!dairy) {
             return res.status(403).json({ success: false, message: "Not authorized to delete this milk product" });
         }

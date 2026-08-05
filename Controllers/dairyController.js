@@ -64,6 +64,8 @@ export const createDairy = async (req, res) => {
             deliveryTime,
             subscriptionPlans
         } = req.body;
+
+
         const existingDairy = await Dairy.findOne({ email });
         if (existingDairy) {
             return res.status(400).json({ success: false, message: 'Dairy with this email already exists' });

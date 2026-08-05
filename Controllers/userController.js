@@ -72,11 +72,11 @@
 
 import Address from "../models/Address.js";
 import User from "../models/user.js";
+import Dairy from "../models/dairy.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import sendEmail from "../utils/sendEmail.js";
-import "dotenv/config";
 
 // ─── Helper: Generate JWT Token ───────────────────────────────────
 const generateToken = (id) => {
@@ -237,6 +237,145 @@ export const updateProfile = async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ success: false, message: "Error updating profile", error: error.message });
+    }
+};
+
+// @desc    Upgrade the current account to a dairy owner
+// @route   PATCH /api/user/become-dairy-owner
+// @access  Private
+// This is its OWN endpoint rather than an updateProfile field on purpose —
+// role must never be settable through a generic "update whatever fields
+// you send" request, or any user could set their own role to admin too.
+// Only ever allows the user -> dairyOwner transition.
+export const becomeDairyOwner = async (req, res) => {
+    try {
+        if (req.user.role === "dairyOwner") {
+            return res.status(200).json({
+                success: true,
+                message: "You're already a dairy owner",
+                data: req.user,
+            });
+        }
+        if (req.user.role !== "user") {
+            return res.status(403).json({ success: false, message: "This account type can't become a dairy owner" });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            { role: "dairyOwner" },
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        res.status(200).json({
+            success: true,
+            message: "You're now a dairy owner — register your dairy to get started",
+            data: updatedUser,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error upgrading account", error: error.message });
+    }
+};
+
+// @desc    Upgrade the logged-in user's account to a delivery rider.
+//          No dairy is chosen here — matching happens dynamically per
+//          delivery, based on proximity (see deliveryController.js).
+// @route   PATCH /api/user/become-delivery-person
+// @access  Private
+// Deliberately narrow, same reasoning as becomeDairyOwner: only ever moves
+// 'user' -> 'deliveryPerson'. Known limitation: no approval step from any
+// dairy owner — anyone can become a rider and be matched to any nearby
+// delivery. Worth hardening with an invite/approval flow later.
+export const becomeDeliveryPerson = async (req, res) => {
+    try {
+        if (req.user.role === "deliveryPerson") {
+            return res.status(200).json({
+                success: true,
+                message: "You're already a delivery rider",
+                data: req.user,
+            });
+        }
+        if (req.user.role !== "user") {
+            return res.status(403).json({ success: false, message: "This account type can't become a delivery rider" });
+        }
+
+        // No dairy is chosen here — riders aren't affiliated with one dairy.
+        // Which delivery they get is decided dynamically, per-delivery, by
+        // proximity at the moment a dairy owner creates it (see
+        // deliveryController.js's findNearestRider).
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user._id,
+            { role: "deliveryPerson" },
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        res.status(200).json({
+            success: true,
+            message: "You're now a delivery rider — deliveries near you will be offered automatically",
+            data: updatedUser,
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error upgrading account", error: error.message });
+    }
+};
+
+// @desc    List delivery riders near a dairy, closest first — for the
+//          manual "reassign" override in the owner dashboard. Riders
+//          aren't affiliated with a specific dairy, so this returns ALL
+//          registered riders who've shared a location, sorted by distance
+//          to this dairy (not filtered to "belongs to" this dairy, since
+//          that concept doesn't exist).
+// @route   GET /api/user/riders/:dairyId
+// @access  Private (dairy owner — only for their own dairy — or admin)
+export const getRidersForDairy = async (req, res) => {
+    try {
+        const { dairyId } = req.params;
+
+        if (req.user.role === "dairyOwner") {
+            const ownsDairy = await Dairy.findOne({ _id: dairyId, owner: req.user._id });
+            if (!ownsDairy) {
+                return res.status(403).json({ success: false, message: "Not authorized for this dairy" });
+            }
+        }
+
+        const dairy = await Dairy.findById(dairyId);
+        const coordinates = dairy?.location?.coordinates;
+
+        let query = User.find({
+            role: "deliveryPerson",
+            currentLocation: { $exists: true, $ne: null },
+        }).select("username phone email");
+
+        if (coordinates) {
+            query = query.where("currentLocation").near({ center: { type: "Point", coordinates } });
+        }
+
+        const riders = await query;
+        res.status(200).json({ success: true, count: riders.length, data: riders });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error fetching riders", error: error.message });
+    }
+};
+
+// @desc    Update the logged-in user's current location (used to find the
+//          nearest rider when auto-assigning a delivery)
+// @route   PATCH /api/user/location
+// @access  Private
+export const updateMyLocation = async (req, res) => {
+    try {
+        const { coordinates } = req.body; // [lng, lat]
+        if (!coordinates || coordinates.length !== 2) {
+            return res.status(400).json({ success: false, message: "Valid coordinates [lng, lat] required" });
+        }
+
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { currentLocation: { type: "Point", coordinates } },
+            { new: true }
+        ).select("-password");
+
+        res.status(200).json({ success: true, data: user });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Error updating location", error: error.message });
     }
 };
 

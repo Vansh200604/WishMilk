@@ -49,9 +49,28 @@ const userSchema = new mongoose.Schema({
     ],
     role: {
         type: String,
-        enum: ['user', 'admin', 'dairyOwner'],
+        enum: ['user', 'admin', 'dairyOwner', 'deliveryPerson'],
         default: 'user',
         required: true
+    },
+    // Only set when role is 'deliveryPerson' — which dairy this rider
+    // delivers for. A rider can only be assigned deliveries from this dairy.
+    dairyId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Dairy"
+    },
+    // Only meaningful for role 'deliveryPerson' — their current position,
+    // used to find the nearest available rider when auto-assigning a
+    // delivery. Not required, since a rider may not have shared it yet.
+    currentLocation: {
+        type: {
+            type: String,
+            enum: ["Point"],
+            default: "Point"
+        },
+        coordinates: {
+            type: [Number] // [lng, lat]
+        }
     },
     isActive: {
         type: Boolean,
@@ -73,7 +92,7 @@ const userSchema = new mongoose.Schema({
     }
 }, {timestamps: true});
 
-
+userSchema.index({ currentLocation: "2dsphere" });
 
 const User = mongoose.model('User', userSchema);
 
