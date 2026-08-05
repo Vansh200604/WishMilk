@@ -258,6 +258,7 @@ export const getMyDairy = async (req, res) => {
     try {
         const dairy = await Dairy.findOne({ owner: req.user._id });
 
+
         if (!dairy) {
             return res.status(404).json({ success: false, message: 'You have not registered a dairy yet' });
         }
