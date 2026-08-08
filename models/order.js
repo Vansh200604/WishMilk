@@ -111,7 +111,7 @@ const orderSchema = new mongoose.Schema({
     },
     paymentId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Transaction"            
+        ref: "Payment"            
     },
     isSubscriptionOrder: {
         type: Boolean,
@@ -123,6 +123,17 @@ const orderSchema = new mongoose.Schema({
     },
     cancelReason: {
         type: String                   
+    },
+    // Set only when a coupon was actually validated and applied
+    // server-side during order creation — see createOrder. totalPrice
+    // above is always the final, post-discount amount the backend itself
+    // computed, never a value trusted from the client.
+    couponCode: {
+        type: String
+    },
+    discountAmount: {
+        type: Number,
+        default: 0
     }
 
 }, { timestamps: true });

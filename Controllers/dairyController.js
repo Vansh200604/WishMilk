@@ -190,7 +190,8 @@ export const updateDairy = async (req, res) => {
         const updatedDairy = await Dairy.findByIdAndUpdate(
             req.params.id,
             { ...req.body },
-            { new: true, runValidators: true }
+            // { new: true, runValidators: true }
+            { returnDocument: "after", runValidators: true }
         );
 
         res.status(200).json({ success: true, message: 'Dairy updated successfully', data: updatedDairy });

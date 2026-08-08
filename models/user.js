@@ -29,11 +29,10 @@ const userSchema = new mongoose.Schema({
         type: {
             type: String,
             enum: ["Point"],
-            default: "Point"
+            // default: "Point"
         },
         coordinates: {
             type: [Number], // [lng, lat]
-            required: true
         },
         address: { type: String, required: true }
     },
@@ -65,11 +64,22 @@ const userSchema = new mongoose.Schema({
     currentLocation: {
         type: {
             type: String,
-            enum: ["Point"]
+            enum: ["Point"],
+            default: "Point"
         },
         coordinates: {
             type: [Number], // [lng, lat]
+            required: true
         }
+    },
+    // Only meaningful for role 'deliveryPerson'. New riders start 'pending'
+    // and are excluded from matching until a dairy owner (or admin)
+    // approves them — riders have no fixed dairy affiliation, so any
+    // dairy owner can approve any pending rider.
+    riderStatus: {
+        type: String,
+        enum: ["pending", "approved", "rejected"],
+        default: "pending"
     },
     isActive: {
         type: Boolean,
@@ -104,4 +114,4 @@ userSchema.index(
 
 const User = mongoose.model('User', userSchema);
 
-export default User;
+export default User; 

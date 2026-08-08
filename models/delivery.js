@@ -44,12 +44,10 @@ const deliverySchema = new mongoose.Schema({
     currentLocation: {
         type: {
             type: String,
-            enum: ["Point"],
-            default: "Point"
+            enum: ["Point"]
         },
         coordinates: {
-            type: [Number],
-            default: [0, 0]
+            type: [Number]
         }
     },
     estimatedDelivery: {
@@ -65,7 +63,7 @@ const deliverySchema = new mongoose.Schema({
 
 deliverySchema.index({ 
     currentLocation: '2dsphere' 
-});
+}, {sparse: true});
 
 const Delivery = mongoose.model('Delivery', deliverySchema);    
 
