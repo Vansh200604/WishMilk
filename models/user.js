@@ -103,14 +103,7 @@ const userSchema = new mongoose.Schema({
 
 // userSchema.index({ currentLocation: "2dsphere" });
 
-userSchema.index(
-    { currentLocation: "2dsphere" },
-    {
-        partialFilterExpression: {
-            currentLocation: { $exists: true }
-        }
-    }
-);
+userSchema.index({ currentLocation: "2dsphere" },);
 
 const User = mongoose.model('User', userSchema);
 

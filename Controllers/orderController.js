@@ -609,7 +609,8 @@ export const linkPaymentToOrder = async (req, res) => {
         const order = await Order.findOneAndUpdate(
             { _id: req.params.id, userId: req.user._id },
             { paymentId: transactionId, paymentStatus: "paid" },
-            { new: true }
+            { returnDocument: "after", runValidators: true },
+            
         );
 
         if (!order) {

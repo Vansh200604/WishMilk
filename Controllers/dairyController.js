@@ -186,10 +186,19 @@ export const updateDairy = async (req, res) => {
         if (dairy.owner.toString() !== req.user._id.toString()) {
             return res.status(403).json({ success: false, message: 'Not authorized to update this dairy' });
         }
+        
+        const updatedLocation = { ...req.body };
+        if(req.body.location){
+            updatedLocation.location = {
+                type: "Point",
+                coordinates: req.body.location.coordinates,
+                address: req.body.location.address
+            };
+        }
 
         const updatedDairy = await Dairy.findByIdAndUpdate(
             req.params.id,
-            { ...req.body },
+            updatedLocation,
             // { new: true, runValidators: true }
             { returnDocument: "after", runValidators: true }
         );
