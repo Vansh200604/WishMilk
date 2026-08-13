@@ -109,7 +109,8 @@ export const updateMilk = async (req, res) => {
         const milk = await Milk.findByIdAndUpdate(
             req.params.id,
             { ...req.body },
-            { new: true, runValidators: true }
+            // { new: true, runValidators: true }
+            { returnDocument: "after", runValidators: true }
         );
 
         if (!milk) {

@@ -859,7 +859,7 @@ export const updateProfile = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
             updates,
-            { new: true, runValidators: true }
+            { returnDocument: "after", runValidators: true }
         ).select('-password');
 
         res.status(200).json({ success: true, message: "Profile updated successfully", data: updatedUser });
@@ -892,7 +892,8 @@ export const becomeDairyOwner = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
             { role: "dairyOwner" },
-            { new: true, runValidators: true }
+            // { new: true, runValidators: true }
+            { returnDocument: "after", runValidators: true }
         ).select('-password');
 
         res.status(200).json({
@@ -934,7 +935,8 @@ export const becomeDeliveryPerson = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
             { role: "deliveryPerson" },
-            { new: true, runValidators: true }
+            // { new: true, runValidators: true }
+            { returnDocument: "after", runValidators: true }
         ).select('-password');
 
         res.status(200).json({
@@ -1008,7 +1010,8 @@ export const approveRider = async (req, res) => {
         const rider = await User.findOneAndUpdate(
             { _id: req.params.riderId, role: "deliveryPerson" },
             { riderStatus: "approved" },
-            { new: true }
+            // { new: true }
+            { returnDocument: "after" }
         ).select("-password");
         if (!rider) return res.status(404).json({ success: false, message: "Rider not found" });
         res.status(200).json({ success: true, message: "Rider approved", data: rider });
@@ -1025,7 +1028,8 @@ export const rejectRider = async (req, res) => {
         const rider = await User.findOneAndUpdate(
             { _id: req.params.riderId, role: "deliveryPerson" },
             { riderStatus: "rejected" },
-            { new: true }
+            // { new: true }
+            { returnDocument: "after" }
         ).select("-password");
         if (!rider) return res.status(404).json({ success: false, message: "Rider not found" });
         res.status(200).json({ success: true, message: "Rider rejected", data: rider });
@@ -1048,7 +1052,8 @@ export const updateMyLocation = async (req, res) => {
         const user = await User.findByIdAndUpdate(
             req.user._id,
             { currentLocation: { type: "Point", coordinates } },
-            { new: true }
+            // { new: true }
+            { returnDocument: "after" }
         ).select("-password");
 
         res.status(200).json({ success: true, data: user });

@@ -27,13 +27,15 @@ import otpRouter          from './Routers/otpRoute.js';
 import deliveryRouter     from './Routers/deliveryRoute.js';
 import couponRouter       from './Routers/couponRoute.js';
 import walletRouter       from './Routers/walletRoute.js';
+import subscriptionRouter   from './Routers/subscripionRoute.js';
+import { startSubscriptionScheduler } from './services/subscriptionService.js';
 
 const app = express();
 
 // ─── Security Middlewares ──────────────────────────────────────────
 app.use(helmetMiddleware);
 app.use(corsMiddleware);
-app.use(globalRateLimiter);
+// app.use(globalRateLimiter);
 
 // ─── Razorpay Webhook — raw body BEFORE express.json() ────────────
 import { razorpayWebhook } from './Controllers/paymentController.js';
@@ -67,6 +69,7 @@ app.use('/api/milk',          milkRouter);
 app.use('/api/delivery',      deliveryRouter);
 app.use('/api/coupons',       couponRouter);
 app.use('/api/wallet',        walletRouter);
+app.use('/api/subscriptions', subscriptionRouter);
 
 
 app.get('/', (req, res) => res.json({

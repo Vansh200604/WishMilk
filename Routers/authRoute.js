@@ -87,15 +87,16 @@ import {
     resetPassword
 } from "../Controllers/userController.js";
 import { protect, restrictTo } from "../middlewares/auth.js";
+import { authRateLimiter } from "../middlewares/security.js";
 
 const router = Router();
 
 // ─── Public Routes ────────────────────────────────────────────────
 router.post('/register', userRegister);
-router.post('/login', userLogin);
+router.post('/login', authRateLimiter, userLogin);
 router.patch('/reactivate', reactivateAccount);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password/:token', resetPassword);
+router.post('/forgot-password', authRateLimiter, forgotPassword);
+router.post('/reset-password/:token', authRateLimiter, resetPassword);
 
 // ─── Private Routes (requires login) ─────────────────────────────
 router.get('/profile', protect, getProfile);

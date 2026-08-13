@@ -431,7 +431,8 @@ export const verifyPayment = async (req, res) => {
                 paymentStatus:     "paid",
                 paidAt:            new Date(),
             },
-            { new: true }
+            // { new: true }
+            { returnDocument: "after" }
         );
 
         if (!payment) {
@@ -478,7 +479,8 @@ export const razorpayWebhook = async (req, res) => {
                     paymentStatus:     "paid",
                     paidAt:            new Date(paymentData.created_at * 1000),
                 },
-                { new: true }
+                // { new: true }
+                { returnDocument: "after" }
             );
             if (payment) {
                 await Order.findByIdAndUpdate(payment.orderId, {
@@ -492,7 +494,8 @@ export const razorpayWebhook = async (req, res) => {
             const payment = await Payment.findOneAndUpdate(
                 { razorPayOrderId: paymentData.order_id },
                 { paymentStatus: "failed" },
-                { new: true }
+                // { new: true }
+                { returnDocument: "after" }
             );
             if (payment) {
                 await Order.findByIdAndUpdate(payment.orderId, { paymentStatus: "failed" });
