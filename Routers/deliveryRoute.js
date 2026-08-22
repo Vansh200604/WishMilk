@@ -23,7 +23,7 @@ router.patch("/:id/decline", restrictTo("deliveryPerson"), declineDelivery);   /
 
 // Shared read routes — the controller itself checks whether this specific
 // user (customer / assigned rider / owning dairy / admin) may see it.
-router.get("/order/:orderId", getDeliveryByOrder);
+router.get("/order/:orderId", protect, getDeliveryByOrder);
 router.get("/:id/timeline",  getTimeline);
 
 // Dairy owner / admin routes
@@ -31,7 +31,7 @@ router.post("/",              restrictTo("dairyOwner", "admin"), createDelivery)
 router.patch("/:id/assign",   restrictTo("dairyOwner", "admin"), assignRider);
  
 // Dairy owner, assigned rider, or admin — controller checks which
-router.patch("/:id/status",   restrictTo("dairyOwner", "admin"), updateDeliveryStatus);
-router.patch("/:id/location", restrictTo("dairyOwner", "admin"), updateLiveLocation);   // change bug dairy_owner to dairyOwner
+router.patch("/:id/status",   restrictTo("deliveryPerson", "dairyOwner", "admin"), updateDeliveryStatus);
+router.patch("/:id/location", restrictTo("deliveryPerson","dairyOwner", "admin"), updateLiveLocation);   // change bug dairy_owner to dairyOwner
 
 export default router;

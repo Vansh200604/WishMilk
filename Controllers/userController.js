@@ -1,77 +1,5 @@
 // import Address from "../models/Address.js";
 // import User from "../models/user.js";
-// import bcrypt from "bcryptjs";
-
-// export const userRegister = async (req, res) => {
-//     try{
-
-//         const { username, email, password, profilePicture, phone, location, favorites, orders, role,
-//              isActive, preferredMilk, isVerified } = req.body
-
-
-//         if (!username?.firstName || !email || !password || !phone || !location?.coordinates || !location?.address) {
-//             return res.status(400).json({ message: "Missing required fields" });
-//         }
-
-//         const existingUser = await User.findOne({email})
-//         if(existingUser){
-//             return res.status(400).json({message: "Email already exists. Please use a different email."})
-//         }
-
-//         // Hash the password
-//         const hashedPassword = await bcrypt.hash(password, 10);
-
-//         // Replace the plain text password with the hashed one
-//         req.body.password = hashedPassword;
-
-
-//         const newUser = await User.create({
-//             username, email, password, profilePicture, phone, location, favorites, orders, role,
-//              isActive, preferredMilk, isVerified
-//         })
-//         res.status(201).json({message: "User registered successfully", user: newUser})
-//     } catch (error) {
-//         res.status(500).json({message: "Error registering user", error: error.message})
-//     }
-// }
-
-// export const userAddress = async(req, res) => {
-//     try{
-//         const { user, label, fullAddress, location } = req.body;
-
-//         if(!user || !fullAddress || !location?.coordinates){
-//             return res.status(400).json({message: "user, fullAddress and location.coordinates are required"})
-//         }
-
-//         const address = await Address.create({
-//             user,
-//             label,
-//             fullAddress,
-//             location: {
-//                 type: "Point",
-//                 coordinates: location.coordinates
-//             }
-//         })
-//         res.status(201).json({message: "Address added successfully",
-//             address
-//         })
-//     }
-//     catch(error){
-//         console.error("Error adding address", error);
-//         res.status(500).json({
-//             message: "Error adding address",
-//             error: error.message
-//         })
-//     }
-// }
-
-
-
-
-
-
-// import Address from "../models/Address.js";
-// import User from "../models/user.js";
 // import Dairy from "../models/dairy.js";
 // import bcrypt from "bcryptjs";
 // import jwt from "jsonwebtoken";
@@ -80,7 +8,7 @@
 
 // // ─── Helper: Generate JWT Token ───────────────────────────────────
 // const generateToken = (id) => {
-//     return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+//     return jwt.sign({ id }, process.env.JWT_SECRET);
 // };
 
 // // @desc    Register a new user
@@ -230,7 +158,7 @@
 //         const updatedUser = await User.findByIdAndUpdate(
 //             req.user._id,
 //             updates,
-//             { new: true, runValidators: true }
+//             { returnDocument: "after", runValidators: true }
 //         ).select('-password');
 
 //         res.status(200).json({ success: true, message: "Profile updated successfully", data: updatedUser });
@@ -263,7 +191,8 @@
 //         const updatedUser = await User.findByIdAndUpdate(
 //             req.user._id,
 //             { role: "dairyOwner" },
-//             { new: true, runValidators: true }
+//             // { new: true, runValidators: true }
+//             { returnDocument: "after", runValidators: true }
 //         ).select('-password');
 
 //         res.status(200).json({
@@ -305,7 +234,8 @@
 //         const updatedUser = await User.findByIdAndUpdate(
 //             req.user._id,
 //             { role: "deliveryPerson" },
-//             { new: true, runValidators: true }
+//             // { new: true, runValidators: true }
+//             { returnDocument: "after", runValidators: true }
 //         ).select('-password');
 
 //         res.status(200).json({
@@ -342,7 +272,8 @@
 
 //         let query = User.find({
 //             role: "deliveryPerson",
-//             currentLocation: { $exists: true, $ne: null },
+//             riderStatus: "approved",
+//             // currentLocation: { $exists: true, $ne: null },
 //         }).select("username phone email");
 
 //         if (coordinates) {
@@ -353,6 +284,56 @@
 //         res.status(200).json({ success: true, count: riders.length, data: riders });
 //     } catch (error) {
 //         res.status(500).json({ success: false, message: "Error fetching riders", error: error.message });
+//     }
+// };
+
+// // @desc    List riders awaiting approval — any dairy owner (or admin) can
+// //          approve/reject, since riders have no fixed dairy affiliation.
+// // @route   GET /api/user/riders/pending
+// // @access  Private (dairyOwner or admin)
+// export const getPendingRiders = async (req, res) => {
+//     try {
+//         const riders = await User.find({ role: "deliveryPerson", riderStatus: "pending" })
+//             .select("username phone email createdAt");
+//         res.status(200).json({ success: true, count: riders.length, data: riders });
+//     } catch (error) {
+//         res.status(500).json({ success: false, message: "Error fetching pending riders", error: error.message });
+//     }
+// };
+
+// // @desc    Approve a pending rider — makes them eligible for matching
+// // @route   PATCH /api/user/riders/:riderId/approve
+// // @access  Private (dairyOwner or admin)
+// export const approveRider = async (req, res) => {
+//     try {
+//         const rider = await User.findOneAndUpdate(
+//             { _id: req.params.riderId, role: "deliveryPerson" },
+//             { riderStatus: "approved" },
+//             // { new: true }
+//             { returnDocument: "after" }
+//         ).select("-password");
+//         if (!rider) return res.status(404).json({ success: false, message: "Rider not found" });
+//         res.status(200).json({ success: true, message: "Rider approved", data: rider });
+//     } catch (error) {
+//         res.status(500).json({ success: false, message: "Error approving rider", error: error.message });
+//     }
+// };
+
+// // @desc    Reject a pending rider — they stay excluded from matching
+// // @route   PATCH /api/user/riders/:riderId/reject
+// // @access  Private (dairyOwner or admin)
+// export const rejectRider = async (req, res) => {
+//     try {
+//         const rider = await User.findOneAndUpdate(
+//             { _id: req.params.riderId, role: "deliveryPerson" },
+//             { riderStatus: "rejected" },
+//             // { new: true }
+//             { returnDocument: "after" }
+//         ).select("-password");
+//         if (!rider) return res.status(404).json({ success: false, message: "Rider not found" });
+//         res.status(200).json({ success: true, message: "Rider rejected", data: rider });
+//     } catch (error) {
+//         res.status(500).json({ success: false, message: "Error rejecting rider", error: error.message });
 //     }
 // };
 
@@ -370,7 +351,8 @@
 //         const user = await User.findByIdAndUpdate(
 //             req.user._id,
 //             { currentLocation: { type: "Point", coordinates } },
-//             { new: true }
+//             // { new: true }
+//             { returnDocument: "after" }
 //         ).select("-password");
 
 //         res.status(200).json({ success: true, data: user });
@@ -627,77 +609,6 @@
 
 
 
-// import Address from "../models/Address.js";
-// import User from "../models/user.js";
-// import bcrypt from "bcryptjs";
-
-// export const userRegister = async (req, res) => {
-//     try{
-
-//         const { username, email, password, profilePicture, phone, location, favorites, orders, role,
-//              isActive, preferredMilk, isVerified } = req.body
-
-
-//         if (!username?.firstName || !email || !password || !phone || !location?.coordinates || !location?.address) {
-//             return res.status(400).json({ message: "Missing required fields" });
-//         }
-
-//         const existingUser = await User.findOne({email})
-//         if(existingUser){
-//             return res.status(400).json({message: "Email already exists. Please use a different email."})
-//         }
-
-//         // Hash the password
-//         const hashedPassword = await bcrypt.hash(password, 10);
-
-//         // Replace the plain text password with the hashed one
-//         req.body.password = hashedPassword;
-
-
-//         const newUser = await User.create({
-//             username, email, password, profilePicture, phone, location, favorites, orders, role,
-//              isActive, preferredMilk, isVerified
-//         })
-//         res.status(201).json({message: "User registered successfully", user: newUser})
-//     } catch (error) {
-//         res.status(500).json({message: "Error registering user", error: error.message})
-//     }
-// }
-
-// export const userAddress = async(req, res) => {
-//     try{
-//         const { user, label, fullAddress, location } = req.body;
-
-//         if(!user || !fullAddress || !location?.coordinates){
-//             return res.status(400).json({message: "user, fullAddress and location.coordinates are required"})
-//         }
-
-//         const address = await Address.create({
-//             user,
-//             label,
-//             fullAddress,
-//             location: {
-//                 type: "Point",
-//                 coordinates: location.coordinates
-//             }
-//         })
-//         res.status(201).json({message: "Address added successfully",
-//             address
-//         })
-//     }
-//     catch(error){
-//         console.error("Error adding address", error);
-//         res.status(500).json({
-//             message: "Error adding address",
-//             error: error.message
-//         })
-//     }
-// }
-
-
-
-
-
 
 import Address from "../models/Address.js";
 import User from "../models/user.js";
@@ -707,30 +618,61 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import sendEmail from "../utils/sendEmail.js";
 
-// ─── Helper: Generate JWT Token ───────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Helper: Generate JWT Token
+// ─────────────────────────────────────────────────────────────
+
 const generateToken = (id) => {
-    return jwt.sign({ id }, process.env.JWT_SECRET);
+    return jwt.sign(
+        { id },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+    );
 };
 
-// @desc    Register a new user
+// ─────────────────────────────────────────────────────────────
+// Register User
 // @route   POST /api/auth/register
 // @access  Public
+// ─────────────────────────────────────────────────────────────
+
 export const userRegister = async (req, res) => {
     try {
         const {
-            username, email, password, profilePicture,
-            phone, location, favorites, role, preferredMilk
+            username,
+            email,
+            password,
+            profilePicture,
+            phone,
+            location,
+            favorites,
+            role,
+            preferredMilk
         } = req.body;
 
         // Validate required fields
-        if (!username?.firstName || !email || !password || !phone || !location?.coordinates || !location?.address) {
-            return res.status(400).json({ success: false, message: "Missing required fields" });
+        if (
+            !username?.firstName ||
+            !email ||
+            !password ||
+            !phone ||
+            !location?.coordinates ||
+            !location?.address
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields"
+            });
         }
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
+
         if (existingUser) {
-            return res.status(400).json({ success: false, message: "Email already exists. Please use a different email." });
+            return res.status(400).json({
+                success: false,
+                message: "Email already exists. Please use a different email."
+            });
         }
 
         // Hash password
@@ -752,8 +694,7 @@ export const userRegister = async (req, res) => {
         // Generate token
         const token = generateToken(newUser._id);
 
-
-        // Return user without password
+        // Remove password from response
         const userResponse = newUser.toObject();
         delete userResponse.password;
 
@@ -765,42 +706,63 @@ export const userRegister = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error registering user", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error registering user",
+            error: error.message
+        });
     }
 };
 
-// @desc    Login user
+// ─────────────────────────────────────────────────────────────
+// Login User
 // @route   POST /api/auth/login
 // @access  Public
+// ─────────────────────────────────────────────────────────────
+
 export const userLogin = async (req, res) => {
     try {
         const { email, password } = req.body;
 
         if (!email || !password) {
-            return res.status(400).json({ success: false, message: "Email and password are required" });
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required"
+            });
         }
 
-        // Find user and include password for comparison
-        const user = await User.findOne({ email }).select('+password');
+        // Find user and include password
+        const user = await User.findOne({ email }).select("+password");
+
         if (!user) {
-            return res.status(401).json({ success: false, message: "Invalid email or password" });
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
         }
 
         // Check if account is active
         if (!user.isActive) {
-            return res.status(403).json({ success: false, message: "Your account has been deactivated. Please contact support." });
+            return res.status(403).json({
+                success: false,
+                message: "Your account has been deactivated. Please contact support."
+            });
         }
 
         // Compare password
         const isMatch = await bcrypt.compare(password, user.password);
+
         if (!isMatch) {
-            return res.status(401).json({ success: false, message: "Invalid email or password" });
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
         }
 
         // Generate token
         const token = generateToken(user._id);
 
-        // Return user without password
+        // Remove password from response
         const userResponse = user.toObject();
         delete userResponse.password;
 
@@ -812,42 +774,75 @@ export const userLogin = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error logging in", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error logging in",
+            error: error.message
+        });
     }
 };
 
-// @desc    Get logged in user profile
+// ─────────────────────────────────────────────────────────────
+// Get Logged-in User Profile
 // @route   GET /api/auth/profile
 // @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const getProfile = async (req, res) => {
     try {
-        if(!req.user || !req.user._id){
-            return res.status(401).json({ success: false, message: "Unauthorized" });
+        if (!req.user || !req.user._id) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
         }
+
         const user = await User.findById(req.user._id)
-            .select('-password')
-            .populate('orders');
+            .select("-password")
+            .populate("orders");
 
         if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
         }
 
-        res.status(200).json({ success: true, data: user });
+        res.status(200).json({
+            success: true,
+            data: user
+        });
 
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error fetching profile", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error fetching profile",
+            error: error.message
+        });
     }
 };
 
-// @desc    Update user profile
+// ─────────────────────────────────────────────────────────────
+// Update User Profile
 // @route   PUT /api/auth/profile
 // @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const updateProfile = async (req, res) => {
     try {
-        const { username, email, phone, profilePicture, location, favorites, preferredMilk } = req.body;
+        const {
+            username,
+            email,
+            phone,
+            profilePicture,
+            location,
+            favorites,
+            preferredMilk
+        } = req.body;
 
         // Prevent updating sensitive fields
         const updates = {};
+
         if (username) updates.username = username;
         if (email) updates.email = email;
         if (phone) updates.phone = phone;
@@ -859,392 +854,784 @@ export const updateProfile = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
             updates,
-            { returnDocument: "after", runValidators: true }
-        ).select('-password');
+            {
+                // new: true, 
+                returnDocument: "after", 
+                runValidators: true
+            }
+        ).select("-password");
 
-        res.status(200).json({ success: true, message: "Profile updated successfully", data: updatedUser });
+        res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            data: updatedUser
+        });
 
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error updating profile", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error updating profile",
+            error: error.message
+        });
     }
 };
 
-// @desc    Upgrade the current account to a dairy owner
+// ─────────────────────────────────────────────────────────────
+// Become Dairy Owner
 // @route   PATCH /api/user/become-dairy-owner
 // @access  Private
-// This is its OWN endpoint rather than an updateProfile field on purpose —
-// role must never be settable through a generic "update whatever fields
-// you send" request, or any user could set their own role to admin too.
-// Only ever allows the user -> dairyOwner transition.
+// ─────────────────────────────────────────────────────────────
+
 export const becomeDairyOwner = async (req, res) => {
     try {
         if (req.user.role === "dairyOwner") {
             return res.status(200).json({
                 success: true,
                 message: "You're already a dairy owner",
-                data: req.user,
+                data: req.user
             });
         }
+
         if (req.user.role !== "user") {
-            return res.status(403).json({ success: false, message: "This account type can't become a dairy owner" });
+            return res.status(403).json({
+                success: false,
+                message: "This account type can't become a dairy owner"
+            });
         }
 
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
             { role: "dairyOwner" },
-            // { new: true, runValidators: true }
-            { returnDocument: "after", runValidators: true }
-        ).select('-password');
+            {
+                // new: true,
+                
+             returnDocument: "after", 
+                runValidators: true
+            }
+        ).select("-password");
 
         res.status(200).json({
             success: true,
             message: "You're now a dairy owner — register your dairy to get started",
-            data: updatedUser,
+            data: updatedUser
         });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error upgrading account", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error upgrading account",
+            error: error.message
+        });
     }
 };
 
-// @desc    Upgrade the logged-in user's account to a delivery rider.
-//          No dairy is chosen here — matching happens dynamically per
-//          delivery, based on proximity (see deliveryController.js).
+// ─────────────────────────────────────────────────────────────
+// Become Delivery Person
 // @route   PATCH /api/user/become-delivery-person
 // @access  Private
-// Deliberately narrow, same reasoning as becomeDairyOwner: only ever moves
-// 'user' -> 'deliveryPerson'. Known limitation: no approval step from any
-// dairy owner — anyone can become a rider and be matched to any nearby
-// delivery. Worth hardening with an invite/approval flow later.
+// ─────────────────────────────────────────────────────────────
+
 export const becomeDeliveryPerson = async (req, res) => {
     try {
         if (req.user.role === "deliveryPerson") {
             return res.status(200).json({
                 success: true,
                 message: "You're already a delivery rider",
-                data: req.user,
+                data: req.user
             });
         }
+
         if (req.user.role !== "user") {
-            return res.status(403).json({ success: false, message: "This account type can't become a delivery rider" });
+            return res.status(403).json({
+                success: false,
+                message: "This account type can't become a delivery rider"
+            });
         }
 
-        // No dairy is chosen here — riders aren't affiliated with one dairy.
-        // Which delivery they get is decided dynamically, per-delivery, by
-        // proximity at the moment a dairy owner creates it (see
-        // deliveryController.js's findNearestRider).
         const updatedUser = await User.findByIdAndUpdate(
             req.user._id,
             { role: "deliveryPerson" },
-            // { new: true, runValidators: true }
-            { returnDocument: "after", runValidators: true }
-        ).select('-password');
+            {
+                // new: true,
+                returnDocument: "after",
+                runValidators: true
+            }
+        ).select("-password");
 
         res.status(200).json({
             success: true,
             message: "You're now a delivery rider — deliveries near you will be offered automatically",
-            data: updatedUser,
+            data: updatedUser
         });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error upgrading account", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error upgrading account",
+            error: error.message
+        });
     }
 };
 
-// @desc    List delivery riders near a dairy, closest first — for the
-//          manual "reassign" override in the owner dashboard. Riders
-//          aren't affiliated with a specific dairy, so this returns ALL
-//          registered riders who've shared a location, sorted by distance
-//          to this dairy (not filtered to "belongs to" this dairy, since
-//          that concept doesn't exist).
+// ─────────────────────────────────────────────────────────────
+// Get Riders For Dairy
 // @route   GET /api/user/riders/:dairyId
-// @access  Private (dairy owner — only for their own dairy — or admin)
+// @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const getRidersForDairy = async (req, res) => {
     try {
         const { dairyId } = req.params;
 
+        // 1. Verify dairy owner authorization
         if (req.user.role === "dairyOwner") {
-            const ownsDairy = await Dairy.findOne({ _id: dairyId, owner: req.user._id });
+            const ownsDairy = await Dairy.findOne({
+                _id: dairyId,
+                owner: req.user._id
+            });
+
             if (!ownsDairy) {
-                return res.status(403).json({ success: false, message: "Not authorized for this dairy" });
+                return res.status(403).json({
+                    success: false,
+                    message: "Not authorized for this dairy"
+                });
             }
         }
 
+        // 2. Get dairy
         const dairy = await Dairy.findById(dairyId);
-        const coordinates = dairy?.location?.coordinates;
 
-        let query = User.find({
-            role: "deliveryPerson",
-            riderStatus: "approved",
-            // currentLocation: { $exists: true, $ne: null },
-        }).select("username phone email");
-
-        if (coordinates) {
-            query = query.where("currentLocation").near({ center: { type: "Point", coordinates } });
+        if (!dairy) {
+            return res.status(404).json({
+                success: false,
+                message: "Dairy not found"
+            });
         }
 
-        const riders = await query;
-        res.status(200).json({ success: true, count: riders.length, data: riders });
+        const coordinates = dairy.location?.coordinates;
+
+        // 3. Base rider query
+        const riderQuery = {
+            role: "deliveryPerson",
+            riderStatus: "approved",
+            isOnline: true,
+            currentLocation: {
+                $exists: true,
+                $ne: null
+            }
+        };
+
+        // 4. Find nearby riders
+        if (
+            Array.isArray(coordinates) &&
+            coordinates.length === 2 &&
+            coordinates.every(Number.isFinite)
+        ) {
+            riderQuery.currentLocation = {
+                $near: {
+                    $geometry: {
+                        type: "Point",
+                        coordinates: coordinates
+                    }
+                }
+            };
+        }
+
+        const riders = await User.find(riderQuery)
+            .select("username phone email currentLocation")
+            .limit(20);
+
+        return res.status(200).json({
+            success: true,
+            count: riders.length,
+            data: riders
+        });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error fetching riders", error: error.message });
+        console.error("getRidersForDairy:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Error fetching riders",
+            error: error.message
+        });
     }
 };
 
-// @desc    List riders awaiting approval — any dairy owner (or admin) can
-//          approve/reject, since riders have no fixed dairy affiliation.
+// export const getRidersForDairy = async (req, res) => {
+//     try {
+//         const { dairyId } = req.params;
+
+//         // Dairy owner can only access their own dairy
+//         if (req.user.role === "dairyOwner") {
+//             const ownsDairy = await Dairy.findOne({
+//                 _id: dairyId,
+//                 owner: req.user._id
+//             });
+
+//             if (!ownsDairy) {
+//                 return res.status(403).json({
+//                     success: false,
+//                     message: "Not authorized for this dairy"
+//                 });
+//             }
+//         }
+
+//         const dairy = await Dairy.findById(dairyId);
+//         const coordinates = dairy?.location?.coordinates;
+
+//         let query = User.find({
+//             role: "deliveryPerson",
+//             riderStatus: "approved",
+//             isOnline: true,
+//             currentLocation: {
+//                 $exists: true,
+//                 $ne: null
+//             }
+//         }).select("username phone email");
+
+//         if (coordinates) {
+//             query = query.where("currentLocation").near({
+//                 center: {
+//                     type: "Point",
+//                     coordinates
+//                 }
+//             });
+//         }
+
+//         const riders = await query;
+
+//         res.status(200).json({
+//             success: true,
+//             count: riders.length,
+//             data: riders
+//         });
+
+//     } catch (error) {
+//         res.status(500).json({
+//             success: false,
+//             message: "Error fetching riders",
+//             error: error.message
+//         });
+//     }
+// };
+
+// ─────────────────────────────────────────────────────────────
+// Get Pending Riders
 // @route   GET /api/user/riders/pending
-// @access  Private (dairyOwner or admin)
+// @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const getPendingRiders = async (req, res) => {
     try {
-        const riders = await User.find({ role: "deliveryPerson", riderStatus: "pending" })
-            .select("username phone email createdAt");
-        res.status(200).json({ success: true, count: riders.length, data: riders });
+        const riders = await User.find({
+            role: "deliveryPerson",
+            riderStatus: "pending"
+        }).select("username phone email createdAt");
+
+        res.status(200).json({
+            success: true,
+            count: riders.length,
+            data: riders
+        });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error fetching pending riders", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error fetching pending riders",
+            error: error.message
+        });
     }
 };
 
-// @desc    Approve a pending rider — makes them eligible for matching
+// ─────────────────────────────────────────────────────────────
+// Approve Rider
 // @route   PATCH /api/user/riders/:riderId/approve
-// @access  Private (dairyOwner or admin)
+// @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const approveRider = async (req, res) => {
     try {
         const rider = await User.findOneAndUpdate(
-            { _id: req.params.riderId, role: "deliveryPerson" },
+            {
+                _id: req.params.riderId,
+                role: "deliveryPerson"
+            },
             { riderStatus: "approved" },
-            // { new: true }
-            { returnDocument: "after" }
+            {
+                // new: true
+                returnDocument: "after"
+            }
         ).select("-password");
-        if (!rider) return res.status(404).json({ success: false, message: "Rider not found" });
-        res.status(200).json({ success: true, message: "Rider approved", data: rider });
+
+        if (!rider) {
+            return res.status(404).json({
+                success: false,
+                message: "Rider not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Rider approved",
+            data: rider
+        });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error approving rider", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error approving rider",
+            error: error.message
+        });
     }
 };
 
-// @desc    Reject a pending rider — they stay excluded from matching
+// ─────────────────────────────────────────────────────────────
+// Reject Rider
 // @route   PATCH /api/user/riders/:riderId/reject
-// @access  Private (dairyOwner or admin)
+// @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const rejectRider = async (req, res) => {
     try {
         const rider = await User.findOneAndUpdate(
-            { _id: req.params.riderId, role: "deliveryPerson" },
+            {
+                _id: req.params.riderId,
+                role: "deliveryPerson"
+            },
             { riderStatus: "rejected" },
-            // { new: true }
-            { returnDocument: "after" }
+            {
+                // new: true
+                returnDocument: "after"
+            }
         ).select("-password");
-        if (!rider) return res.status(404).json({ success: false, message: "Rider not found" });
-        res.status(200).json({ success: true, message: "Rider rejected", data: rider });
+
+        if (!rider) {
+            return res.status(404).json({
+                success: false,
+                message: "Rider not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Rider rejected",
+            data: rider
+        });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error rejecting rider", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error rejecting rider",
+            error: error.message
+        });
     }
 };
 
-// @desc    Update the logged-in user's current location (used to find the
-//          nearest rider when auto-assigning a delivery)
+// ─────────────────────────────────────────────────────────────
+// Update My Location
 // @route   PATCH /api/user/location
 // @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const updateMyLocation = async (req, res) => {
     try {
-        const { coordinates } = req.body; // [lng, lat]
+        const { coordinates } = req.body;
+
+        // Coordinates must be [longitude, latitude]
         if (!coordinates || coordinates.length !== 2) {
-            return res.status(400).json({ success: false, message: "Valid coordinates [lng, lat] required" });
+            return res.status(400).json({
+                success: false,
+                message: "Valid coordinates [lng, lat] required"
+            });
         }
 
         const user = await User.findByIdAndUpdate(
             req.user._id,
-            { currentLocation: { type: "Point", coordinates } },
-            // { new: true }
-            { returnDocument: "after" }
+            {
+                currentLocation: {
+                    type: "Point",
+                    coordinates
+                },
+                isOnline: true
+            },
+            {
+                // new: true
+                returnDocument: "after"
+            }
         ).select("-password");
 
-        res.status(200).json({ success: true, data: user });
+        res.status(200).json({
+            success: true,
+            data: user
+        });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error updating location", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error updating location",
+            error: error.message
+        });
     }
 };
 
-// @desc    Change password
+// ─────────────────────────────────────────────────────────────
+// Go Offline
+// @route   PATCH /api/user/go-offline
+// @access  Private
+// ─────────────────────────────────────────────────────────────
+
+export const goOffline = async (req, res) => {
+    try {
+        const user = await User.findByIdAndUpdate(
+            req.user._id,
+            { isOnline: false },
+            {
+                // new: true
+                returnDocument: "after"
+            }
+        ).select("-password");
+
+        res.status(200).json({
+            success: true,
+            data: user
+        });
+
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "Error going offline",
+            error: error.message
+        });
+    }
+};
+
+// ─────────────────────────────────────────────────────────────
+// Change Password
 // @route   PATCH /api/auth/change-password
 // @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const changePassword = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
 
         if (!currentPassword || !newPassword) {
-            return res.status(400).json({ success: false, message: "Current and new password are required" });
+            return res.status(400).json({
+                success: false,
+                message: "Current and new password are required"
+            });
         }
 
-        const user = await User.findById(req.user._id).select('+password');
+        const user = await User.findById(req.user._id).select("+password");
 
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        const isMatch = await bcrypt.compare(
+            currentPassword,
+            user.password
+        );
+
         if (!isMatch) {
-            return res.status(401).json({ success: false, message: "Current password is incorrect" });
+            return res.status(401).json({
+                success: false,
+                message: "Current password is incorrect"
+            });
         }
 
         user.password = await bcrypt.hash(newPassword, 10);
+
         await user.save();
 
-        res.status(200).json({ success: true, message: "Password changed successfully" });
+        res.status(200).json({
+            success: true,
+            message: "Password changed successfully"
+        });
 
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error changing password", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error changing password",
+            error: error.message
+        });
     }
 };
 
-
-// @desc    Forgot password - sends reset email
+// ─────────────────────────────────────────────────────────────
+// Forgot Password
 // @route   POST /api/auth/forgot-password
 // @access  Public
+// ─────────────────────────────────────────────────────────────
+
 export const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
 
         if (!email) {
-            return res.status(400).json({ success: false, message: "Email is required" });
+            return res.status(400).json({
+                success: false,
+                message: "Email is required"
+            });
         }
 
         const user = await User.findOne({ email });
+
         if (!user) {
-            // Don't reveal if email exists or not (security best practice)
-            return res.status(200).json({ success: true, message: "If this email exists, a reset link has been sent" });
+            // Don't reveal whether email exists
+            return res.status(200).json({
+                success: true,
+                message: "If this email exists, a reset link has been sent"
+            });
         }
 
         // Generate reset token
-        const resetToken = crypto.randomBytes(32).toString("hex");
+        const resetToken = crypto
+            .randomBytes(32)
+            .toString("hex");
 
-        // Hash it before saving to DB
-        const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+        // Hash token before saving to DB
+        const hashedToken = crypto
+            .createHash("sha256")
+            .update(resetToken)
+            .digest("hex");
 
-        // Save to user
+        // Save token
         user.resetPasswordToken = hashedToken;
-        user.resetPasswordExpire = Date.now() + 15 * 60 * 1000; // 15 minutes
+        user.resetPasswordExpire =
+            Date.now() + 15 * 60 * 1000;
+
         await user.save();
 
-        // Send email with raw (unhashed) token
-        const resetURL = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+        // Send raw token in email
+        const resetURL =
+            `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
 
         await sendEmail({
             to: user.email,
             subject: "Password Reset Request",
             html: `
                 <h2>Password Reset</h2>
-                <p>You requested to reset your password. Click the link below:</p>
+
+                <p>
+                    You requested to reset your password.
+                    Click the link below:
+                </p>
+
                 <a href="${resetURL}" style="
                     background:#4F46E5;
                     color:white;
                     padding:10px 20px;
                     text-decoration:none;
                     border-radius:5px;
-                ">Reset Password</a>
-                <p>This link expires in <strong>15 minutes</strong>.</p>
-                <p>If you didn't request this, please ignore this email.</p>
+                ">
+                    Reset Password
+                </a>
+
+                <p>
+                    This link expires in
+                    <strong>15 minutes</strong>.
+                </p>
+
+                <p>
+                    If you didn't request this,
+                    please ignore this email.
+                </p>
             `
         });
 
-        res.status(200).json({ success: true, message: "Password reset link sent to your email" });
+        res.status(200).json({
+            success: true,
+            message: "Password reset link sent to your email"
+        });
 
     } catch (error) {
         // Clean up token if email fails
         await User.findOneAndUpdate(
             { email: req.body.email },
-            { resetPasswordToken: undefined, resetPasswordExpire: undefined }
+            {
+                resetPasswordToken: undefined,
+                resetPasswordExpire: undefined
+            }
         );
-        res.status(500).json({ success: false, message: "Error sending email", error: error.message });
+
+        res.status(500).json({
+            success: false,
+            message: "Error sending email",
+            error: error.message
+        });
     }
 };
 
-// @desc    Reset password using token
+// ─────────────────────────────────────────────────────────────
+// Reset Password
 // @route   POST /api/auth/reset-password/:token
 // @access  Public
+// ─────────────────────────────────────────────────────────────
+
 export const resetPassword = async (req, res) => {
     try {
         const { token } = req.params;
         const { newPassword } = req.body;
 
         if (!newPassword) {
-            return res.status(400).json({ success: false, message: "New password is required" });
+            return res.status(400).json({
+                success: false,
+                message: "New password is required"
+            });
         }
 
-        // Hash the incoming token to compare with DB
-        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+        // Hash incoming token
+        const hashedToken = crypto
+            .createHash("sha256")
+            .update(token)
+            .digest("hex");
 
-        // Find user with valid (non-expired) token
+        // Find user with valid token
         const user = await User.findOne({
             resetPasswordToken: hashedToken,
-            resetPasswordExpire: { $gt: Date.now() }  // not expired
+            resetPasswordExpire: {
+                $gt: Date.now()
+            }
         });
 
         if (!user) {
-            return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
+            return res.status(400).json({
+                success: false,
+                message: "Invalid or expired reset token"
+            });
         }
 
         // Set new password
         user.password = await bcrypt.hash(newPassword, 10);
 
-        // Clear reset token fields
+        // Clear reset token
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
 
         await user.save();
 
-        res.status(200).json({ success: true, message: "Password reset successfully. You can now login." });
+        res.status(200).json({
+            success: true,
+            message: "Password reset successfully. You can now login."
+        });
 
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error resetting password", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error resetting password",
+            error: error.message
+        });
     }
 };
 
-
-// @desc    Deactivate account
+// ─────────────────────────────────────────────────────────────
+// Deactivate Account
 // @route   PATCH /api/auth/deactivate
 // @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const deactivateAccount = async (req, res) => {
     try {
-        await User.findByIdAndUpdate(req.user._id, { isActive: false });
-        res.status(200).json({ success: true, message: "Account deactivated successfully" });
+        await User.findByIdAndUpdate(
+            req.user._id,
+            { isActive: false }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Account deactivated successfully"
+        });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error deactivating account", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error deactivating account",
+            error: error.message
+        });
     }
 };
 
-export const reactivateAccount = async(req, res) => {
+// ─────────────────────────────────────────────────────────────
+// Reactivate Account
+// ─────────────────────────────────────────────────────────────
+
+export const reactivateAccount = async (req, res) => {
     try {
         const { email, password } = req.body;
-        if(!email || !password){
-            return res.status(400).json({ success: false, message: "Email and password are required" });
+
+        if (!email || !password) {
+            return res.status(400).json({
+                success: false,
+                message: "Email and password are required"
+            });
         }
 
-        const user = await User.findOne({email}).select('+password');
+        const user = await User.findOne({ email })
+            .select("+password");
 
-        if(!user){
-            return res.status(404).json({ success: false, message: "User not found" });
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found"
+            });
         }
-        if(user.isActive){
-            return res.status(400).json({ success: false, message: "Account is already active" });
+
+        if (user.isActive) {
+            return res.status(400).json({
+                success: false,
+                message: "Account is already active"
+            });
         }
-        const isMatch = await bcrypt.compare(password, user.password);
-        if(!isMatch){
-            return res.status(401).json({ success: false, message: "Invalid email or password" });
+
+        const isMatch = await bcrypt.compare(
+            password,
+            user.password
+        );
+
+        if (!isMatch) {
+            return res.status(401).json({
+                success: false,
+                message: "Invalid email or password"
+            });
         }
-        await User.findByIdAndUpdate(user._id, {isActive: true});
-        res.status(200).json({ success: true, message: "Account reactivated successfully" });
+
+        await User.findByIdAndUpdate(
+            user._id,
+            { isActive: true }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: "Account reactivated successfully"
+        });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error reactivating account", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error reactivating account",
+            error: error.message
+        });
     }
-}
+};
 
-// @desc    Add a new address
+// ─────────────────────────────────────────────────────────────
+// Add Address
 // @route   POST /api/auth/address
 // @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const userAddress = async (req, res) => {
     try {
         const { label, fullAddress, location } = req.body;
 
         if (!fullAddress || !location?.coordinates) {
-            return res.status(400).json({ success: false, message: "fullAddress and location.coordinates are required" });
+            return res.status(400).json({
+                success: false,
+                message:
+                    "fullAddress and location.coordinates are required"
+            });
         }
 
         const address = await Address.create({
-            user: req.user._id,        
+            user: req.user._id,
             label,
             fullAddress,
             location: {
@@ -1253,44 +1640,87 @@ export const userAddress = async (req, res) => {
             }
         });
 
-        res.status(201).json({ success: true, message: "Address added successfully", data: address });
+        res.status(201).json({
+            success: true,
+            message: "Address added successfully",
+            data: address
+        });
 
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error adding address", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error adding address",
+            error: error.message
+        });
     }
 };
 
-// @desc    Get all addresses of logged in user
+// ─────────────────────────────────────────────────────────────
+// Get User Addresses
 // @route   GET /api/auth/address
 // @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const getUserAddresses = async (req, res) => {
     try {
-        const addresses = await Address.find({ user: req.user._id });
-        res.status(200).json({ success: true, count: addresses.length, data: addresses });
+        const addresses = await Address.find({
+            user: req.user._id
+        });
+
+        res.status(200).json({
+            success: true,
+            count: addresses.length,
+            data: addresses
+        });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error fetching addresses", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error fetching addresses",
+            error: error.message
+        });
     }
 };
 
-// @desc    Delete an address
+// ─────────────────────────────────────────────────────────────
+// Delete Address
 // @route   DELETE /api/auth/address/:id
 // @access  Private
+// ─────────────────────────────────────────────────────────────
+
 export const deleteAddress = async (req, res) => {
     try {
         const address = await Address.findById(req.params.id);
 
         if (!address) {
-            return res.status(404).json({ success: false, message: "Address not found" });
+            return res.status(404).json({
+                success: false,
+                message: "Address not found"
+            });
         }
 
-        if (address.user.toString() !== req.user._id.toString()) {
-            return res.status(403).json({ success: false, message: "Not authorized to delete this address" });
+        if (
+            address.user.toString() !==
+            req.user._id.toString()
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: "Not authorized to delete this address"
+            });
         }
 
         await address.deleteOne();
-        res.status(200).json({ success: true, message: "Address deleted successfully" });
+
+        res.status(200).json({
+            success: true,
+            message: "Address deleted successfully"
+        });
 
     } catch (error) {
-        res.status(500).json({ success: false, message: "Error deleting address", error: error.message });
+        res.status(500).json({
+            success: false,
+            message: "Error deleting address",
+            error: error.message
+        });
     }
 };

@@ -1,4 +1,3 @@
-
 // import Delivery from '../models/delivery.js';
 // import Order from '../models/order.js';
 // import Dairy from '../models/dairy.js';
@@ -37,7 +36,7 @@
 //             riderStatus: "approved",
 //             _id: { $nin: excludeRiderIds },
 //             currentLocation: { $exists: true, $ne: null },
-//             "currentLocation.coordinates": { $exists: true, $ne: [] }
+//             // "currentLocation.coordinates": { $exists: true, $ne: [] }
 //         }).where("currentLocation").near({
 //             center: { type: "Point", coordinates: coordinates }
 //         }).limit(5);
@@ -400,6 +399,7 @@
 
 
 
+
 import Delivery from '../models/delivery.js';
 import Order from '../models/order.js';
 import Dairy from '../models/dairy.js';
@@ -417,6 +417,7 @@ async function canManageDelivery(user, delivery) {
     }
     return false;
 }
+
 
 const MAX_ACTIVE_DELIVERIES = 3;
 const ACTIVE_DELIVERY_STATUSES = ["assigned", "picked-up", "out-for-delivery"];
@@ -436,9 +437,10 @@ async function findNearestRider(coordinates, excludeRiderIds) {
         const candidates = await User.find({
             role: "deliveryPerson",
             riderStatus: "approved",
+            isOnline: true,
             _id: { $nin: excludeRiderIds },
             currentLocation: { $exists: true, $ne: null },
-            // "currentLocation.coordinates": { $exists: true, $ne: [] }
+            "currentLocation.coordinates": { $exists: true, $ne: [] }
         }).where("currentLocation").near({
             center: { type: "Point", coordinates: coordinates }
         }).limit(5);
@@ -705,6 +707,17 @@ export const updateDeliveryStatus = async (req, res) => {
         const allowed = await canManageDelivery(req.user, delivery);
         if (!allowed) {
             return res.status(403).json({ success: false, message: "Not authorized to update this delivery" });
+        }
+
+        // Dispatch states (assigned, picked-up, out-for-delivery) are the
+        // owner's call, but the final outcome — actually delivered, or
+        // failed — belongs to whoever is physically there. The owner's
+        // job ends once it's out for delivery.
+        if (req.user.role === "dairyOwner" && ["delivered", "failed"].includes(status)) {
+            return res.status(403).json({
+                success: false,
+                message: "Only the assigned rider can mark a delivery as delivered or failed"
+            });
         }
 
         if (req.user.role === "deliveryPerson" && !delivery.riderConfirmed) {
