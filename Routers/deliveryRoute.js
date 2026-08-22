@@ -7,8 +7,8 @@ import {
     updateLiveLocation,
     getTimeline,
     getMyDeliveries,
-    // confirmDelivery, // restart
-    // declineDelivery,  // restart
+    confirmDelivery, // restart
+    declineDelivery,  // restart
 } from "../Controllers/deliveryController.js";
 import { protect, restrictTo } from "../middlewares/auth.js";
 
@@ -18,8 +18,8 @@ router.use(protect);
 
 // Delivery rider routes
 router.get("/my-deliveries", restrictTo("deliveryPerson"), getMyDeliveries);
-// router.patch("/:id/confirm", restrictTo("deliveryPerson"), confirmDelivery);   //restart
-// router.patch("/:id/decline", restrictTo("deliveryPerson"), declineDelivery);   //restart
+router.patch("/:id/confirm", restrictTo("deliveryPerson"), confirmDelivery);   //restart
+router.patch("/:id/decline", restrictTo("deliveryPerson"), declineDelivery);   //restart
 
 // Shared read routes — the controller itself checks whether this specific
 // user (customer / assigned rider / owning dairy / admin) may see it.

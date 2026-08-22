@@ -69,7 +69,6 @@ const userSchema = new mongoose.Schema({
         },
         coordinates: {
             type: [Number], // [lng, lat]
-            required: true
         }
     },
     // Only meaningful for role 'deliveryPerson'. New riders start 'pending'
