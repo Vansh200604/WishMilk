@@ -30,10 +30,50 @@ export default function Register() {
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
   const useMyLocation = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      toast.error("Location isn't available in this browser");
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
-      () => toast.error("Couldn't get your location — you can skip this")
+      async (pos) => {
+        try {
+          const latitude = pos.coords.latitude;
+          const longitude = pos.coords.longitude;
+
+          // Save coordinates for MongoDB
+          setCoords([longitude, latitude]);
+
+          // Convert GPS coordinates into address
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to get address");
+          }
+
+          const data = await response.json();
+
+          // Automatically fill the address input
+          set({
+            address: data.display_name
+          });
+
+          toast.success("Location and address captured");
+        } catch (error) {
+          console.error(error);
+          toast.error("Location found, but address couldn't be detected");
+        }
+      },
+      () => {
+        toast.error("Couldn't get your location — you can skip this");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      }
     );
   };
 

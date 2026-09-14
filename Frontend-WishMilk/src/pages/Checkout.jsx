@@ -410,7 +410,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { MapPin, Plus, Tag, Loader2, Banknote, ShieldCheck } from "lucide-react";
+import { MapPin, Plus, Tag, Loader2, Banknote, ShieldCheck, Trash2 } from "lucide-react";
 import { authApi } from "../api/auth.js";
 import { orderApi } from "../api/order.js";
 import { couponApi } from "../api/coupon.js";
@@ -469,13 +469,56 @@ export default function Checkout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // const captureLocation = () => {
+  //   if (!navigator.geolocation) return;
+  //   navigator.geolocation.getCurrentPosition(
+  //     (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
+  //     () => toast.error("Couldn't access your location")
+  //   );
+  // };
+
   const captureLocation = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      toast.error("Location is not supported by your browser");
+      return;
+    }
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
-      () => toast.error("Couldn't access your location")
+      async (pos) => {
+        const longitude = pos.coords.longitude;
+        const latitude = pos.coords.latitude;
+
+        setCoords([longitude, latitude]);
+
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+          );
+
+          const data = await response.json();
+
+          if (data.display_name) {
+            setNewAddress((prev) => ({
+              ...prev,
+              fullAddress: data.display_name,
+            }));
+          }
+        } catch {
+          toast.error("Couldn't find your address");
+        }
+      },
+      () => {
+        toast.error("Couldn't access your location");
+      },
+      {
+        enableHighAccuracy: false,
+        maximumAge: 60000,
+        timeout: 5000,
+      }
     );
   };
+
+  
 
   const handleAddAddress = async (e) => {
     e.preventDefault();
@@ -490,12 +533,39 @@ export default function Checkout() {
       setAddresses((prev) => [...prev, res.data]);
       setAddressId(res.data._id);
       setShowAddAddress(false);
+      
+      resetAddressForm();
+      setCoords(null);
       toast.success("Address saved");
     } catch (err) {
       toast.error(err.message);
     } finally {
       setSavingAddress(false);
     }
+  };
+
+  const handleRemoveAddress = async (id) => {
+    try {
+      await authApi.deleteAddress(id);
+
+      setAddresses((prev) => prev.filter((a) => a._id !== id));
+
+      if (addressId === id) {
+        setAddressId("");
+      }
+
+      toast.success("Address removed");
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
+  const resetAddressForm = () => {
+    setNewAddress({
+      label: "home",
+      fullAddress: "",
+    });
+    setCoords(null);
   };
 
   const handleApplyCoupon = async () => {
@@ -616,6 +686,18 @@ export default function Checkout() {
                   <span className="mb-0.5 block font-medium capitalize text-ink">{a.label}</span>
                   <span className="text-ink-soft">{a.fullAddress}</span>
                 </span>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleRemoveAddress(a._id);
+                  }}
+                  className="ml-auto flex h-8 w-8 flex-none items-center justify-center rounded-lg text-clay hover:bg-clay-light"
+                >
+                  <Trash2 size={16} />
+                </button>
               </label>
             ))}
 
@@ -665,8 +747,16 @@ export default function Checkout() {
                     <Button type="submit" size="sm" loading={savingAddress}>
                       Save address
                     </Button>
+
                     {addresses.length > 0 && (
-                      <Button type="button" variant="ghost" size="sm" onClick={() => setShowAddAddress(false)}>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => {
+                          resetAddressForm();
+                          setShowAddAddress(false);
+                        }}
+                      >
                         Cancel
                       </Button>
                     )}

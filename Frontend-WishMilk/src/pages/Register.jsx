@@ -29,21 +29,57 @@ export default function Register() {
 
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
+
   const useMyLocation = () => {
     if (!navigator.geolocation) {
       toast.error("Location isn't available in this browser");
       return;
     }
+
     setLocating(true);
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords([pos.coords.longitude, pos.coords.latitude]);
-        setLocating(false);
-        toast.success("Location captured");
+      async (pos) => {
+        try {
+          const latitude = pos.coords.latitude;
+          const longitude = pos.coords.longitude;
+
+          // MongoDB GeoJSON format: [longitude, latitude]
+          setCoords([longitude, latitude]);
+
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to get address");
+          }
+
+          const data = await response.json();
+
+          set({
+            address: data.display_name
+          });
+
+          toast.success("Location and address captured");
+        } catch (error) {
+          console.error(error);
+          toast.error("Location captured, but address couldn't be found");
+        } finally {
+          setLocating(false);
+        }
       },
-      () => {
+      (error) => {
+        console.error(error);
         setLocating(false);
-        toast.error("Couldn't get your location — enter your address manually and we'll use a default point");
+        toast.error(
+          "Couldn't get your location — enter your address manually"
+        );
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
       }
     );
   };
