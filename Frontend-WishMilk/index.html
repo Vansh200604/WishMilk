@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#FBF6EC" />
+    <title>WishMilk — Fresh milk, delivered daily</title>
+    <meta name="description" content="Order fresh milk and dairy from trusted local dairies, delivered to your door every morning." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="/src/assets/wishmilk_64x64_icon.png" />
+    
+    <script>
+      // Runs before React mounts, so the correct theme class is already on
+      // <html> by the time anything paints — no flash of the wrong theme.
+      (function () {
+        var STORAGE_KEY = "wishmilk_theme";
+        var saved = localStorage.getItem(STORAGE_KEY) || "system";
+        var isDark =
+          saved === "dark" ||
+          (saved === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", isDark);
+      })();
+    </script>
+  </head>
+  <body class="bg-cream text-ink font-body antialiased">
+    <div id="root"></div>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

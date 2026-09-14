@@ -1,0 +1,98 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --wm-cream: 251 246 236;
+    --wm-cream-soft: 243 236 221;
+    --wm-cream-card: 255 253 248;
+    --wm-ink: 34 48 59;
+    --wm-ink-soft: 75 91 103;
+    --wm-ink-faint: 138 152 162;
+    --wm-butter: 231 167 60;
+    --wm-butter-light: 242 198 122;
+    --wm-butter-dark: 200 138 36;
+    --wm-dawn: 110 151 184;
+    --wm-dawn-light: 175 201 220;
+    --wm-dawn-dark: 76 115 146;
+    --wm-leaf: 76 139 98;
+    --wm-leaf-light: 220 235 225;
+    --wm-clay: 193 87 58;
+    --wm-clay-light: 245 222 214;
+  }
+
+  /* Applied to <html> by ThemeContext (and by the blocking script in
+     index.html, before React mounts, to avoid a flash of the wrong theme). */
+  .dark {
+    color-scheme: dark;
+    --wm-cream: 23 31 38;
+    --wm-cream-soft: 30 40 48;
+    --wm-cream-card: 36 47 56;
+    --wm-ink: 243 236 221;
+    --wm-ink-soft: 184 194 202;
+    --wm-ink-faint: 124 135 144;
+    --wm-butter: 240 181 84;
+    --wm-butter-light: 74 58 28;
+    --wm-butter-dark: 242 198 122;
+    --wm-dawn: 134 174 203;
+    --wm-dawn-light: 35 55 74;
+    --wm-dawn-dark: 175 201 220;
+    --wm-leaf: 95 163 120;
+    --wm-leaf-light: 31 58 42;
+    --wm-clay: 217 124 92;
+    --wm-clay-light: 58 36 32;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+  h1, h2, h3, h4 {
+    font-family: theme("fontFamily.display");
+    letter-spacing: -0.01em;
+  }
+  ::selection {
+    background-color: theme("colors.butter.light");
+    color: theme("colors.ink.DEFAULT");
+  }
+  /* Visible keyboard focus everywhere */
+  :focus-visible {
+    outline: 2px solid theme("colors.dawn.DEFAULT");
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+@layer utilities {
+  .cream-top {
+    position: relative;
+  }
+  .cream-top::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 4px;
+    border-radius: 1rem 1rem 0 0;
+    background-image: theme("backgroundImage.cream-top");
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
