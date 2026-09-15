@@ -129,7 +129,7 @@ const notificationService = {
 
     if (user.phone) {
       tasks.push(this.sendTwilioSMS({ to: user.phone, body: message, userId: user._id, type, metadata }));
-      tasks.push(this.sendMSG91SMS({ to: user.phone, message, userId: user._id, type, metadata }));
+      // tasks.push(this.sendMSG91SMS({ to: user.phone, message, userId: user._id, type, metadata }));
     }
 
     if (user.fcmToken) {

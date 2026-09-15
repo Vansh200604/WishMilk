@@ -28,7 +28,7 @@ import deliveryRouter     from './Routers/deliveryRoute.js';
 import couponRouter       from './Routers/couponRoute.js';
 import walletRouter       from './Routers/walletRoute.js';
 import subscriptionRouter   from './Routers/subscripionRoute.js';
-import adminRouter        from './Routers/adminRoute.js';
+import adminRouter        from './Admin/AdminRoute.js';
 import { startSubscriptionScheduler } from './services/subscriptionService.js';
 
 const app = express();

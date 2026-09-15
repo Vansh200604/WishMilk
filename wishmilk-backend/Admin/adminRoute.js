@@ -6,7 +6,7 @@ import {
     getAllDairiesAdmin,
     getAllOrdersAdmin,
     getAllSubscriptionsAdmin,
-} from "../Controllers/adminController.js";
+} from "./AdminController.js";
 import { protect, restrictTo } from "../middlewares/auth.js";
 
 const router = express.Router();

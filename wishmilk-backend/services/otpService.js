@@ -1,11 +1,17 @@
 import crypto from 'crypto';
 import OTP from '../models/otp.js';
 import sendEmail from '../utils/sendEmail.js';
+import twilio from 'twilio';
 import dotenv from 'dotenv';
 dotenv.config();
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 const hashOTP = (otp) => crypto.createHash('sha256').update(otp).digest('hex');
+
+const twilioClient = twilio(
+    process.env.TWILIO_ACCOUNT_SID,
+    process.env.TWILIO_AUTH_TOKEN
+);
 
 const otpService = {
     async sendEmailOTP({ email, purpose = "register"}) {
@@ -47,13 +53,20 @@ const otpService = {
             purpose,
             expiresAt: new Date(Date.now() + 10 * 60 * 1000)
         });
-         // MSG91 API
-        const axios = (await import("axios")).default;
-        await axios.post(
-            "https://api.msg91.com/api/v5/flow/",
-            { template_id: process.env.MSG91_TEMPLATE_ID, short_url: "0", mobiles: `91${phone}`, var1: otp },
-            { headers: { authkey: process.env.MSG91_AUTH_KEY, "Content-Type": "application/json" } }
-        );
+        //  // MSG91 API
+        // const axios = (await import("axios")).default;
+        // await axios.post(
+        //     "https://api.msg91.com/api/v5/flow/",
+        //     { template_id: process.env.MSG91_TEMPLATE_ID, short_url: "0", mobiles: `91${phone}`, var1: otp },
+        //     { headers: { authkey: process.env.MSG91_AUTH_KEY, "Content-Type": "application/json" } }
+        // );
+
+
+        await twilioClient.messages.create({
+            body: `Your WishMilk OTP is ${otp}. Please do not share this OTP with anyone.`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: `+91${phone}`
+        });
         return { success: true, message: "OTP sent to phone" };
     },
 
