@@ -28,6 +28,7 @@ import deliveryRouter     from './Routers/deliveryRoute.js';
 import couponRouter       from './Routers/couponRoute.js';
 import walletRouter       from './Routers/walletRoute.js';
 import subscriptionRouter   from './Routers/subscripionRoute.js';
+import adminRouter        from './Routers/adminRoute.js';
 import { startSubscriptionScheduler } from './services/subscriptionService.js';
 
 const app = express();
@@ -50,6 +51,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ─── Database ──────────────────────────────────────────────────────
 connectDB();
+startSubscriptionScheduler();
 
 // ─── Frontend CORS Configuration ───────────────────────────────────
 // app.use(cors());
@@ -70,6 +72,7 @@ app.use('/api/delivery',      deliveryRouter);
 app.use('/api/coupons',       couponRouter);
 app.use('/api/wallet',        walletRouter);
 app.use('/api/subscriptions', subscriptionRouter);
+app.use('/api/admin',         adminRouter);
 
 
 app.get('/', (req, res) => res.json({
