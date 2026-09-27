@@ -74,6 +74,7 @@ export const userRegister = async (req, res) => {
             profilePicture,
             phone,
             location,
+            currentLocation,
             favorites,
             role,
             preferredMilk
