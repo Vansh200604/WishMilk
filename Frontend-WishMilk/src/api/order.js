@@ -7,8 +7,10 @@ export const orderApi = {
   cancel: (id, cancelReason) =>
     unwrap(axiosClient.patch(`/orders/${id}/cancel`, { cancelReason })),
   reschedule: (id, payload) => unwrap(axiosClient.patch(`/orders/${id}/reschedule`, payload)),
+  getActivity: (year) => unwrap(axiosClient.get("/orders/my-activity", { params: { year } })),
 
   // Dairy owner
   byDairy: (dairyId, params) => unwrap(axiosClient.get(`/orders/dairy/${dairyId}`, { params })),
   updateStatus: (id, payload) => unwrap(axiosClient.patch(`/orders/${id}/status`, payload)),
-};
+};  
+

@@ -9,6 +9,7 @@ import {
     updateOrderStatus,
     linkPaymentToOrder,
 } from "../Controllers/orderController.js";
+import { getMyActivity } from "../Controllers/activityController.js";
 import { protect, isDairyOwner, isAdmin, restrictTo } from "../middlewares/auth.js";
 
 const router = express.Router();
@@ -18,6 +19,7 @@ router.use(protect);
 // User routes
 router.post("/",                    createOrder);
 router.get("/my-orders",            getMyOrders);
+router.get("/my-activity",          getMyActivity);
 router.get("/:id",                  getOrderById);
 router.patch("/:id/cancel",         cancelOrder);
 router.patch("/:id/reschedule",     rescheduleOrder);
