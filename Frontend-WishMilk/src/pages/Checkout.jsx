@@ -483,17 +483,27 @@ export default function Checkout() {
       return;
     }
 
+    toast.loading("Getting your location...", { id: "location" });
+
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const longitude = pos.coords.longitude;
         const latitude = pos.coords.latitude;
 
+        console.log("Location:", longitude, latitude);
+
         setCoords([longitude, latitude]);
+
+        toast.success("Location captured", { id: "location" });
 
         try {
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
           );
+
+          if (!response.ok) {
+            throw new Error("Reverse geocoding failed");
+          }
 
           const data = await response.json();
 
@@ -503,17 +513,32 @@ export default function Checkout() {
               fullAddress: data.display_name,
             }));
           }
-        } catch {
-          toast.error("Couldn't find your address");
+        } catch (error) {
+          console.error("Address lookup error:", error);
+          toast.error("Location captured, but couldn't find the address");
         }
       },
-      () => {
-        toast.error("Couldn't access your location");
+
+      (error) => {
+        console.error("Geolocation error:", error);
+
+        toast.dismiss("location");
+
+        if (error.code === 1) {
+          toast.error("Location permission denied. Please allow location access.");
+        } else if (error.code === 2) {
+          toast.error("Location unavailable. Please turn on device location.");
+        } else if (error.code === 3) {
+          toast.error("Location request timed out. Please try again.");
+        } else {
+          toast.error("Couldn't access your location");
+        }
       },
+
       {
-        enableHighAccuracy: false,
+        enableHighAccuracy: true,
+        timeout: 15000,
         maximumAge: 60000,
-        timeout: 5000,
       }
     );
   };

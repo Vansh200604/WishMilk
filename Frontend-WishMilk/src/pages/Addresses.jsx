@@ -30,13 +30,85 @@ export default function Addresses() {
 
   useEffect(load, []);
 
+  // const captureLocation = () => {
+  //   if (!navigator.geolocation) return;
+  //   navigator.geolocation.getCurrentPosition(
+  //     (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
+  //     () => toast.error("Couldn't access your location")
+  //   );
+  // };
+
+
   const captureLocation = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+      toast.error("Location is not supported by your browser");
+      return;
+    }
+
+    const loadingToast = toast.loading("Getting your location...");
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
-      () => toast.error("Couldn't access your location")
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+
+        // Update coordinates immediately
+        setCoords([longitude, latitude]);
+
+        // Now get the address
+        try {
+          const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+          );
+
+          if (!response.ok) {
+            throw new Error("Address lookup failed");
+          }
+
+          const data = await response.json();
+
+          if (data.display_name) {
+            setForm((prev) => ({
+              ...prev,
+              fullAddress: data.display_name,
+            }));
+
+            toast.success("Location captured successfully", {
+              id: loadingToast,
+            });
+          } else {
+            throw new Error("No address found");
+          }
+        } catch (error) {
+          console.error(error);
+
+          toast.error("Location captured, but address could not be found", {
+            id: loadingToast,
+          });
+        }
+      },
+
+      (error) => {
+        console.error("Geolocation error:", error);
+
+        toast.dismiss(loadingToast);
+
+        if (error.code === 1) {
+          toast.error("Please allow location permission");
+        } else if (error.code === 2) {
+          toast.error("Location is unavailable");
+        } else if (error.code === 3) {
+          toast.error("Location request timed out");
+        }
+      },
+
+      {
+        enableHighAccuracy: false,
+        timeout: 5000,
+        maximumAge: 300000,
+      }
     );
   };
+  
 
   const handleAdd = async (e) => {
     e.preventDefault();

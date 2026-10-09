@@ -66,13 +66,94 @@ export default function OwnerDairyProfile() {
     });
   };
 
+  // const captureLocation = () => {
+  //   if (!navigator.geolocation) return;
+  //   navigator.geolocation.getCurrentPosition(
+  //     (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
+  //     () => toast.error("Couldn't access your location")
+  //   );
+  // };
+
   const captureLocation = () => {
-    if (!navigator.geolocation) return;
+    if (!navigator.geolocation) {
+        toast.error("Location is not supported by your browser");
+        return;
+    }
+
+    const loadingToast = toast.loading("Capturing location...");
+
     navigator.geolocation.getCurrentPosition(
-      (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
-      () => toast.error("Couldn't access your location")
+        async (pos) => {
+            const { longitude, latitude } = pos.coords;
+
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&zoom=18&addressdetails=1`
+                );
+
+                if (!response.ok) {
+                    throw new Error("Address lookup failed");
+                }
+
+                const data = await response.json();
+
+                if (!data.display_name) {
+                    throw new Error("Address not found");
+                }
+
+                // Save coordinates
+                setCoords([longitude, latitude]);
+
+                // Save address separately
+                set({
+                    address: data.display_name
+                });
+
+                toast.success("Location captured successfully", {
+                    id: loadingToast
+                });
+
+            } catch (error) {
+                console.error("Address lookup error:", error);
+
+                toast.error(
+                    "Location found, but address could not be loaded",
+                    {
+                        id: loadingToast
+                    }
+                );
+            }
+        },
+
+        (error) => {
+            console.error("Location error:", error);
+
+            if (error.code === 1) {
+                toast.error("Please allow location permission", {
+                    id: loadingToast
+                });
+            } else if (error.code === 2) {
+                toast.error("Location is unavailable", {
+                    id: loadingToast
+                });
+            } else if (error.code === 3) {
+                toast.error("Location request timed out", {
+                    id: loadingToast
+                });
+            } else {
+                toast.error("Couldn't access your location", {
+                    id: loadingToast
+                });
+            }
+        },
+
+        {
+            enableHighAccuracy: true,
+            timeout: 2000,
+            maximumAge: 0
+        }
     );
-  };
+};
 
   const buildPayload = () => ({
     name: form.name,

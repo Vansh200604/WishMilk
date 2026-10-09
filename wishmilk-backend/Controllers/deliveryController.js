@@ -16,6 +16,7 @@
 //     return false;
 // }
 
+
 // const MAX_ACTIVE_DELIVERIES = 3;
 // const ACTIVE_DELIVERY_STATUSES = ["assigned", "picked-up", "out-for-delivery"];
 
@@ -34,9 +35,10 @@
 //         const candidates = await User.find({
 //             role: "deliveryPerson",
 //             riderStatus: "approved",
+//             isOnline: true,
 //             _id: { $nin: excludeRiderIds },
 //             currentLocation: { $exists: true, $ne: null },
-//             // "currentLocation.coordinates": { $exists: true, $ne: [] }
+//             "currentLocation.coordinates": { $exists: true, $ne: [] }
 //         }).where("currentLocation").near({
 //             center: { type: "Point", coordinates: coordinates }
 //         }).limit(5);
@@ -156,6 +158,23 @@
 //         const delivery = await Delivery.findById(req.params.id);
 //         if (!delivery) return res.status(404).json({ success: false, message: "Delivery not found" });
 
+//         const order = await Order.findById(delivery.order);
+
+//         if (!order) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: "Order not found"
+//             });
+//         }
+
+//         // Check if the order is cancelled before assigning a rider
+//         if (order.status === "cancelled") {
+//             return res.status(400).json({
+//                 success: false,
+//                 message: "Cannot assign rider to a cancelled order"
+//             });
+//         }
+
 //         if (req.user.role === "dairyOwner") {
 //             const owns = await Dairy.findOne({ _id: delivery.dairy, owner: req.user._id });
 //             if (!owns) return res.status(403).json({ success: false, message: "Not authorized for this delivery" });
@@ -270,6 +289,7 @@
 //             .populate("dairy", "name phone owner")
 //             .populate("assignedRider", "username phone");
 
+        
 //         if (!delivery) return res.status(404).json({ success: false, message: "Delivery not found" });
 
 //         const isOwnOrder = delivery.user.toString() === req.user._id.toString();
@@ -303,6 +323,17 @@
 //         const allowed = await canManageDelivery(req.user, delivery);
 //         if (!allowed) {
 //             return res.status(403).json({ success: false, message: "Not authorized to update this delivery" });
+//         }
+
+//         // Dispatch states (assigned, picked-up, out-for-delivery) are the
+//         // owner's call, but the final outcome — actually delivered, or
+//         // failed — belongs to whoever is physically there. The owner's
+//         // job ends once it's out for delivery.
+//         if (req.user.role === "dairyOwner" && ["delivered", "failed"].includes(status)) {
+//             return res.status(403).json({
+//                 success: false,
+//                 message: "Only the assigned rider can mark a delivery as delivered or failed"
+//             });
 //         }
 
 //         if (req.user.role === "deliveryPerson" && !delivery.riderConfirmed) {
@@ -397,9 +428,6 @@
 
 
 
-
-
-
 import Delivery from '../models/delivery.js';
 import Order from '../models/order.js';
 import Dairy from '../models/dairy.js';
@@ -417,7 +445,6 @@ async function canManageDelivery(user, delivery) {
     }
     return false;
 }
-
 
 const MAX_ACTIVE_DELIVERIES = 3;
 const ACTIVE_DELIVERY_STATUSES = ["assigned", "picked-up", "out-for-delivery"];
@@ -557,9 +584,23 @@ export const assignRider = async (req, res) => {
             return res.status(400).json({ success: false, message: "riderId is required" });
         }
 
-        const delivery = await Delivery.findById(req.params.id);
-        if (!delivery) return res.status(404).json({ success: false, message: "Delivery not found" });
+        // const delivery = await Delivery.findById(req.params.id);
+        // if (!delivery) return res.status(404).json({ success: false, message: "Delivery not found" });
 
+        // if (req.user.role === "dairyOwner") {
+        //     const owns = await Dairy.findOne({ _id: delivery.dairy, owner: req.user._id });
+        //     if (!owns) return res.status(403).json({ success: false, message: "Not authorized for this delivery" });
+        // }
+        const delivery = await Delivery.findById(req.params.id);
+
+        if (!delivery) {
+            return res.status(404).json({
+                success: false,
+                message: "Delivery not found"
+            });
+        }
+
+        // Check if the order is cancelled before assigning a rider
         const order = await Order.findById(delivery.order);
 
         if (!order) {
@@ -569,7 +610,6 @@ export const assignRider = async (req, res) => {
             });
         }
 
-        // Check if the order is cancelled before assigning a rider
         if (order.status === "cancelled") {
             return res.status(400).json({
                 success: false,
@@ -578,9 +618,19 @@ export const assignRider = async (req, res) => {
         }
 
         if (req.user.role === "dairyOwner") {
-            const owns = await Dairy.findOne({ _id: delivery.dairy, owner: req.user._id });
-            if (!owns) return res.status(403).json({ success: false, message: "Not authorized for this delivery" });
-        } else if (req.user.role !== "admin") {
+            const owns = await Dairy.findOne({
+                _id: delivery.dairy,
+                owner: req.user._id
+            });
+
+            if (!owns) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Not authorized for this delivery"
+                });
+            }
+        }
+        else if (req.user.role !== "admin") {
             return res.status(403).json({ success: false, message: "Not authorized" });
         }
 
@@ -687,11 +737,14 @@ export const declineDelivery = async (req, res) => {
 export const getDeliveryByOrder = async (req, res) => {
     try {
         const delivery = await Delivery.findOne({ order: req.params.orderId })
-            .populate("order", "status totalPrice scheduledDate deliverySlot")
-            .populate("dairy", "name phone owner")
+            .populate({
+                path: "order",
+                select: "status totalPrice scheduledDate deliverySlot deliveryAddress",
+                populate: { path: "deliveryAddress", select: "label fullAddress location" }
+            })
+            .populate("dairy", "name phone owner location")
             .populate("assignedRider", "username phone");
 
-        
         if (!delivery) return res.status(404).json({ success: false, message: "Delivery not found" });
 
         const isOwnOrder = delivery.user.toString() === req.user._id.toString();
@@ -815,9 +868,10 @@ export const getMyDeliveries = async (req, res) => {
                 select: "milkType quantity deliveryAddress deliverySlot scheduledDate totalPrice",
                 populate: [
                     { path: "milkType", select: "name unit" },
-                    { path: "deliveryAddress", select: "label fullAddress" }
+                    { path: "deliveryAddress", select: "label fullAddress location" }
                 ]
             })
+            .populate("dairy", "name location phone")
             .sort({ createdAt: -1 });
 
         res.status(200).json({ success: true, count: deliveries.length, data: deliveries });
