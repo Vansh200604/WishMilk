@@ -46,7 +46,8 @@ function computeStreaks(dates) {
 
 // @desc    Activity dashboard numbers for the logged-in customer: totals,
 //          milk-type breakdown, delivery streaks, and a per-day activity
-//          calendar for a given year.
+//          calendar (with milk type + quantity detail for tooltips) for
+//          a given year.
 // @route   GET /api/orders/my-activity?year=2026
 // @access  Private
 export const getMyActivity = async (req, res) => {
@@ -77,10 +78,22 @@ export const getMyActivity = async (req, res) => {
                 { $unwind: "$milk" },
                 { $group: { _id: "$milk.type", count: { $sum: 1 } } },
             ]),
+            // Per day AND per milk-type, so the heatmap tooltip can show a
+            // breakdown like "Cow milk — 2L" / "Buffalo milk — 1L" for a
+            // day where more than one type was ordered.
             Order.aggregate([
                 { $match: { userId, scheduledDate: { $gte: yearStart, $lt: yearEnd } } },
-                { $group: { _id: dayFormat, count: { $sum: 1 } } },
-                { $sort: { _id: 1 } },
+                { $lookup: { from: Milk.collection.name, localField: "milkType", foreignField: "_id", as: "milk" } },
+                { $unwind: { path: "$milk", preserveNullAndEmptyArrays: true } },
+                {
+                    $group: {
+                        _id: { date: dayFormat, milkType: "$milk.type" },
+                        quantity: { $sum: "$quantity" },
+                        orders: { $sum: 1 },
+                        unit: { $first: "$milk.unit" },
+                    },
+                },
+                { $sort: { "_id.date": 1 } },
             ]),
             Order.aggregate([
                 { $match: { userId, status: "delivered" } },
@@ -97,7 +110,23 @@ export const getMyActivity = async (req, res) => {
             if (row._id in milkBreakdown) milkBreakdown[row._id] = row.count;
         });
 
-        const dailyActivity = dailyRows.map((row) => ({ date: row._id, count: row.count }));
+        // Fold the (date, milkType) rows back into one entry per date, each
+        // carrying a `count` (for the cell's shade) and an `items` list
+        // (for the tooltip: milk type, quantity, unit).
+        const dailyMap = new Map();
+        dailyRows.forEach((row) => {
+            const date = row._id.date;
+            if (!dailyMap.has(date)) dailyMap.set(date, { date, count: 0, items: [] });
+            const entry = dailyMap.get(date);
+            entry.count += row.orders;
+            entry.items.push({
+                milkType: row._id.milkType || "milk",
+                quantity: row.quantity,
+                unit: row.unit || "L",
+                orders: row.orders,
+            });
+        });
+        const dailyActivity = Array.from(dailyMap.values()).sort((a, b) => a.date.localeCompare(b.date));
         const yearTotal = dailyActivity.reduce((sum, d) => sum + d.count, 0);
         const { current, longest } = computeStreaks(deliveredRows.map((r) => r._id));
 
