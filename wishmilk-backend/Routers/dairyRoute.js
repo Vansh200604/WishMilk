@@ -10,7 +10,8 @@ import {
     getMyDairy,
     deleteDairy
 } from '../Controllers/dairyController.js';
-import { protect } from '../middlewares/auth.js';
+import { getOwnerActivity } from '../Controllers/activityController.js';
+import { protect, restrictTo } from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -18,11 +19,12 @@ const router = express.Router();
 router.get('/', getAllDairies);
 router.get('/nearby', getNearbyDairies);
 router.get('/owner/my-dairy', protect, getMyDairy);
+router.get('/owner/my-activity', protect, restrictTo('dairyOwner'), getOwnerActivity);
 router.get('/:id', getDairyById);
 
 // ─── Private Routes (requires login) ─────────────────────────────
 router.post('/', protect, createDairy);
-router.get('/owner/my-dairy', protect, getMyDairy);
+// router.get('/owner/my-dairy', protect, getMyDairy);
 router.put('/:id', protect, updateDairy);
 router.patch('/:id/toggle-status', protect, toggleDairyStatus);
 router.patch('/:id/pricing', protect, updateMilkPricing);

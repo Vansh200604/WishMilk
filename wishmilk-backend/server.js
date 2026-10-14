@@ -29,6 +29,7 @@ import couponRouter       from './Routers/couponRoute.js';
 import walletRouter       from './Routers/walletRoute.js';
 import subscriptionRouter   from './Routers/subscripionRoute.js';
 import adminRouter        from './Admin/AdminRoute.js';
+import earningsRouter     from './Routers/earningsRoute.js';
 import { startSubscriptionScheduler } from './services/subscriptionService.js';
 
 const app = express();
@@ -73,6 +74,7 @@ app.use('/api/coupons',       couponRouter);
 app.use('/api/wallet',        walletRouter);
 app.use('/api/subscriptions', subscriptionRouter);
 app.use('/api/admin',         adminRouter);
+app.use('/api/earnings',      earningsRouter);
 
 
 app.get('/', (req, res) => res.json({
