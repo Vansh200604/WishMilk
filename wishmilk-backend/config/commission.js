@@ -1,0 +1,2 @@
+﻿export const PLATFORM_COMMISSION_PERCENT = 15;
+export const RIDER_COMMISSION_PERCENT = 10;
