@@ -1,11 +1,41 @@
-// import { useNavigate } from "react-router-dom";
-// import { Truck, LogOut } from "lucide-react";
+// import { useNavigate, Link } from "react-router-dom";
+// import { Truck, Bell, LogOut } from "lucide-react";
 // import { useAuth } from "../context/AuthContext.jsx";
 // import ThemeToggle from "./ui/ThemeToggle.jsx";
+// import Logout from "./ui/Logout.jsx";
+// import { useState, useRef, useEffect } from "react";
 
 // export default function Layout({ children }) {
 //   const { user, logout } = useAuth();
 //   const navigate = useNavigate();
+
+//    const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
+//     const logoutRef = useRef(null);
+//     const handleLogoutClick = () => {
+//       setShowLogoutConfirmation((prev) => !prev);
+//     };
+  
+    
+  
+//     useEffect(() => {
+//       const handleScroll = () => {
+//         setShowLogoutConfirmation(false);
+//       };
+      
+//       const handleClickOutside = (event) => {
+//         if(logoutRef.current && !logoutRef.current.contains(event.target)) {
+//           setShowLogoutConfirmation(false);
+//         }
+//       }
+  
+//       window.addEventListener("scroll", handleScroll);
+//       document.addEventListener("click", handleClickOutside);
+  
+//       return () => {
+//         window.removeEventListener("scroll", handleScroll);
+//         document.removeEventListener("click", handleClickOutside);
+//       };
+//     }, []);
 
 //   return (
 //     <div className="min-h-screen bg-cream">
@@ -22,7 +52,15 @@
 //           </div>
 //           <div className="flex items-center gap-2">
 //             <ThemeToggle />
-//             <button
+//             <Link
+//               to="/notifications"
+//               className="flex h-9 w-9 items-center justify-center rounded-xl text-ink-soft hover:bg-ink/5"
+//               aria-label="Notifications"
+//               title="Notifications"
+//             >
+//               <Bell size={17} />
+//             </Link>
+//             {/* <button
 //               onClick={() => {
 //                 logout();
 //                 navigate("/login");
@@ -32,7 +70,30 @@
 //               title="Log out"
 //             >
 //               <LogOut size={17} />
-//             </button>
+
+//             </button> */}
+
+//             <div className="relative" ref={logoutRef}>
+//               <button
+//                 onClick={handleLogoutClick}
+//                 className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-soft transition-all duration-200 hover:bg-red-100 hover:text-red-600 active:scale-95"
+//                 aria-label="Log out"
+//                 title="Log out" 
+//               >
+//                 <LogOut size={18} />
+//               </button>
+
+//               <Logout
+//                 isOpen={showLogoutConfirmation}
+//                 onClose={() => setShowLogoutConfirmation(false)}
+//                 onConfirm={() => {
+//                   setShowLogoutConfirmation(false);
+//                   logout();
+//                   navigate("/");
+//                 }}
+//               />
+//             </div>
+            
 //           </div>
 //         </div>
 //         {user && (
@@ -49,44 +110,25 @@
 
 
 
-import { useNavigate, Link } from "react-router-dom";
-import { Truck, Bell, LogOut } from "lucide-react";
+
+
+
+
+import { NavLink, useNavigate, Link } from "react-router-dom";
+import { Truck, Package, Wallet, Activity, Bell, LogOut } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
 import ThemeToggle from "./ui/ThemeToggle.jsx";
-import Logout from "./ui/Logout.jsx";
-import { useState, useRef, useEffect } from "react";
+import { cx } from "../lib/utils.js";
+
+const tabs = [
+  { to: "/", label: "Deliveries", icon: Package, end: true },
+  { to: "/earnings", label: "Earnings", icon: Wallet },
+  { to: "/activity", label: "Activity", icon: Activity },
+];
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-
-   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
-    const logoutRef = useRef(null);
-    const handleLogoutClick = () => {
-      setShowLogoutConfirmation((prev) => !prev);
-    };
-  
-    
-  
-    useEffect(() => {
-      const handleScroll = () => {
-        setShowLogoutConfirmation(false);
-      };
-      
-      const handleClickOutside = (event) => {
-        if(logoutRef.current && !logoutRef.current.contains(event.target)) {
-          setShowLogoutConfirmation(false);
-        }
-      }
-  
-      window.addEventListener("scroll", handleScroll);
-      document.addEventListener("click", handleClickOutside);
-  
-      return () => {
-        window.removeEventListener("scroll", handleScroll);
-        document.removeEventListener("click", handleClickOutside);
-      };
-    }, []);
 
   return (
     <div className="min-h-screen bg-cream">
@@ -111,7 +153,7 @@ export default function Layout({ children }) {
             >
               <Bell size={17} />
             </Link>
-            {/* <button
+            <button
               onClick={() => {
                 logout();
                 navigate("/login");
@@ -121,37 +163,32 @@ export default function Layout({ children }) {
               title="Log out"
             >
               <LogOut size={17} />
-
-            </button> */}
-
-            <div className="relative" ref={logoutRef}>
-              <button
-                onClick={handleLogoutClick}
-                className="flex h-10 w-10 items-center justify-center rounded-xl text-ink-soft transition-all duration-200 hover:bg-red-100 hover:text-red-600 active:scale-95"
-                aria-label="Log out"
-                title="Log out" 
-              >
-                <LogOut size={18} />
-              </button>
-
-              <Logout
-                isOpen={showLogoutConfirmation}
-                onClose={() => setShowLogoutConfirmation(false)}
-                onConfirm={() => {
-                  setShowLogoutConfirmation(false);
-                  logout();
-                  navigate("/");
-                }}
-              />
-            </div>
-            
+            </button>
           </div>
         </div>
         {user && (
-          <p className="mx-auto max-w-2xl px-6 pb-3 text-xs text-ink-faint">
+          <p className="mx-auto max-w-2xl px-6 pt-3 text-xs text-ink-faint">
             Signed in as {user.username?.firstName} {user.username?.lastName || ""}
           </p>
         )}
+        <nav className="mx-auto flex max-w-2xl gap-1 overflow-x-auto px-6 pb-3 pt-3 no-scrollbar">
+          {tabs.map(({ to, label, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                cx(
+                  "flex flex-none items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors",
+                  isActive ? "bg-ink/8 text-ink" : "text-ink-soft hover:bg-ink/5"
+                )
+              }
+            >
+              <Icon size={16} />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
       </header>
       <main className="mx-auto max-w-2xl px-6 py-8">{children}</main>
     </div>
