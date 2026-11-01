@@ -6,7 +6,8 @@ import {
     getAllDairiesAdmin,
     getAllOrdersAdmin,
     getAllSubscriptionsAdmin,
-} from "./AdminController.js";
+} from "./adminController.js";
+import { getAdminActivity } from "../Controllers/activityController.js";
 import { protect, restrictTo } from "../middlewares/auth.js";
 
 const router = express.Router();
@@ -19,5 +20,6 @@ router.patch("/users/:id/status", updateUserActiveStatus);
 router.get("/dairies",         getAllDairiesAdmin);
 router.get("/orders",          getAllOrdersAdmin);
 router.get("/subscriptions",   getAllSubscriptionsAdmin);
+router.get("/activity",        getAdminActivity);
 
 export default router;

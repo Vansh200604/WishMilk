@@ -27,7 +27,7 @@ import otpRouter          from './Routers/otpRoute.js';
 import deliveryRouter     from './Routers/deliveryRoute.js';
 import couponRouter       from './Routers/couponRoute.js';
 import walletRouter       from './Routers/walletRoute.js';
-import subscriptionRouter   from './Routers/subscripionRoute.js';
+import subscriptionRouter   from './Routers/subscriptionRoute.js';
 import adminRouter        from './Admin/AdminRoute.js';
 import earningsRouter     from './Routers/earningsRoute.js';
 import { startSubscriptionScheduler } from './services/subscriptionService.js';

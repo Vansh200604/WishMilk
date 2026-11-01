@@ -6,6 +6,7 @@ import {
   getMyPayouts,
   getAllPayouts,
   updatePayoutStatus,
+  getPlatformEarnings,
 } from "../Controllers/earningsController.js";
 import { protect, restrictTo } from "../middlewares/auth.js";
 
@@ -27,6 +28,7 @@ router.post("/payouts", restrictTo("dairyOwner", "deliveryPerson"), requestPayou
 router.get("/payouts/my", restrictTo("dairyOwner", "deliveryPerson"), getMyPayouts);
 
 // Admin — review and settle payout requests across everyone.
+router.get("/platform", restrictTo("admin"), getPlatformEarnings);
 router.get("/payouts", restrictTo("admin"), getAllPayouts);
 router.patch("/payouts/:id", restrictTo("admin"), updatePayoutStatus);
 

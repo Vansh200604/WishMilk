@@ -169,17 +169,17 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen bg-cream">
       <header className="border-b border-ink/8 bg-cream-card">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2 font-display text-lg font-semibold text-ink">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2 font-display text-lg font-semibold text-ink">
             <span className="flex h-8 w-8 items-center justify-center rounded-full bg-butter text-ink-fixed">
               <Milk size={16} />
             </span>
             WishMilk
-            <span className="ml-1 rounded-full bg-dawn-light/50 px-2.5 py-0.5 text-xs font-semibold text-dawn-dark">
+            <span className="ml-1 hidden whitespace-nowrap rounded-full bg-dawn-light/50 px-2.5 py-0.5 text-xs font-semibold text-dawn-dark sm:inline-block">
               Owner portal
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-none items-center gap-1 sm:gap-2">
             <ThemeToggle />
             <button
               onClick={() => {
@@ -194,7 +194,7 @@ export default function Layout({ children }) {
             </button>
           </div>
         </div>
-        <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-6 pb-3 no-scrollbar">
+        <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-4 pb-3 no-scrollbar sm:px-6">
           {tabs.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
@@ -213,7 +213,7 @@ export default function Layout({ children }) {
           ))}
         </nav>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
     </div>
   );
 }

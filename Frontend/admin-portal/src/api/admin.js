@@ -7,5 +7,6 @@ export const adminApi = {
     unwrap(axiosClient.patch(`/admin/users/${id}/status`, { isActive })),
   getDairies: (params) => unwrap(axiosClient.get("/admin/dairies", { params })),
   getOrders: (params) => unwrap(axiosClient.get("/admin/orders", { params })),
+  getActivity: (year) => unwrap(axiosClient.get("/admin/activity", { params: { year } })),
   getSubscriptions: (params) => unwrap(axiosClient.get("/admin/subscriptions", { params })),
 };
