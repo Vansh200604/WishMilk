@@ -10,10 +10,13 @@ const MONTH_NAMES = [
 // glance, and matches how every calendar-heatmap convention (GitHub,
 // etc.) already does it. Colors are WishMilk's own leaf-green tones.
 function intensityClass(count) {
-  if (count === 0) return "bg-ink/6";
-  if (count === 1) return "bg-leaf-light";
-  if (count <= 3) return "bg-leaf/60";
-  return "bg-leaf";
+  if (count === 0) {
+    return "bg-ink/15 ring-1 ring-inset ring-ink/10";
+  }
+  if (count === 1) return "bg-butter-light";
+  if (count <= 3) return "bg-butter";
+
+  return "bg-butter-dark";
 }
 
 function formatDateLabel(dateStr) {

@@ -216,7 +216,7 @@
 //                   ) : (
 //                     <div key={`blank-${monthIndex}-${idx}`} className={CELL_SIZE_CLASS} />
 //                   )
-//                 )}
+//                 )} 
 //               </div>
 //               <span className="text-[10px] text-ink-faint sm:text-xs">{name.slice(0, 3)}</span>
 //             </div>
@@ -243,10 +243,13 @@ const MONTH_NAMES = [
 // glance, and matches how every calendar-heatmap convention (GitHub,
 // etc.) already does it. Colors are WishMilk's own leaf-green tones.
 function intensityClass(count) {
-  if (count === 0) return "bg-ink/6";
-  if (count === 1) return "bg-leaf-light";
-  if (count <= 3) return "bg-leaf/60";
-  return "bg-leaf";
+  if (count === 0) {
+    return "bg-ink/15 ring-1 ring-inset ring-ink/10";
+  }
+  if (count === 1) return "bg-butter-light";
+  if (count <= 3) return "bg-butter";
+
+  return "bg-butter-dark";
 }
 
 function formatDateLabel(dateStr) {
@@ -327,7 +330,7 @@ function DayCell({ cell, isPinned, onToggle }) {
           {/* little pointer triangle */}
           <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-cream-card" />
         </div>
-      )}
+      )} 
     </div>
   );
 }
@@ -434,7 +437,7 @@ export default function ActivityHeatmap({ year, dailyActivity }) {
               data-month-index={monthIndex}
               className="flex flex-none flex-col items-center gap-2"
             >
-              <div className={`grid grid-flow-col grid-rows-7 ${CELL_GAP_CLASS}`}>
+              <div className={`grid grid-flow-col grid-rows-7 auto-cols-max ${CELL_GAP_CLASS}`}>
                 {cells.map((cell, idx) =>
                   cell ? (
                     <DayCell
