@@ -603,6 +603,7 @@ export default function Checkout() {
       // first item's amount — showing the whole cart's subtotal here would
       // overstate the discount that actually gets applied.
       const previewAmount = isSingleItem ? subtotal : items[0].pricePerUnit * items[0].quantity;
+      
       const res = await couponApi.apply({ code: couponCode, orderAmount: previewAmount });
       setCoupon(res.data);
       toast.success(`Coupon ${res.data.code} applied`);
@@ -613,6 +614,46 @@ export default function Checkout() {
       setApplyingCoupon(false);
     }
   };
+
+  // const handleApplyCoupon = async () => {
+  //   const code = couponCode.trim().toUpperCase();
+
+  //   if (!code) {
+  //       toast.error("Please enter a coupon code");
+  //       return;
+  //   }
+
+  //   // Use the complete cart subtotal, not just the first item.
+  //   const cartSubtotal = Number(subtotal);
+
+  //   if (!Number.isFinite(cartSubtotal) || cartSubtotal <= 0) {
+  //       toast.error("Invalid cart amount");
+  //       return;
+  //   }
+
+  //   setApplyingCoupon(true);
+  //   setCouponError("");
+
+  //   try {
+  //       console.log("Cart items:", items);
+  //       console.log("Complete cart subtotal:", cartSubtotal);
+
+  //       const res = await couponApi.apply({
+  //           code,
+  //           orderAmount: cartSubtotal
+  //       });
+
+  //       setCoupon(res.data);
+
+  //       toast.success(`Coupon ${res.data.code} applied`);
+
+  //   } catch (err) {
+  //       setCoupon(null);
+  //       setCouponError(err.message);
+  //   } finally {
+  //       setApplyingCoupon(false);
+  //   }
+  // };
 
   const total = coupon ? Math.max(0, subtotal - coupon.discount) : subtotal;
 
@@ -643,6 +684,22 @@ export default function Checkout() {
         });
         createdOrders.push(res.data);
       }
+
+    // const checkoutRes = await orderApi.checkout({
+    //   items: items.map((item) => ({
+    //       dairy: item.dairyId,
+    //       milkType: item.milkId,
+    //       quantity: item.quantity
+    //   })),
+
+    //   deliveryAddress: addressId,
+    //   deliverySlot: slot,
+    //   scheduledDate: date,
+
+    //   couponCode: coupon?.code || null
+    // });
+
+    // const createdOrders = checkoutRes.data.orders;
 
       const wantsOnline = isSingleItem && paymentChoice === "online";
 
@@ -840,7 +897,7 @@ export default function Checkout() {
         )}
         {!isSingleItem && (
           <p className="mt-1.5 text-xs text-ink-faint">
-            Coupons apply to one order at a time — this one will be applied to your first item.
+            Coupons are applied once to your complete cart subtotal.
           </p>
         )}
       </section>

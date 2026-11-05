@@ -50,6 +50,11 @@ export const applyCoupon = async(req, res) => {
         if(new Date() > coupon.expiresAt){
             return res.status(400).json({ success: false, message: "Coupon has expired" });
         }
+        
+        console.log("Received orderAmount:", req.body.orderAmount);
+        console.log("Coupon minimum amount:", coupon.minOrderAmount);
+        console.log("Comparison:", Number(req.body.orderAmount) < Number(coupon.minOrderAmount));
+
         if(orderAmount < coupon.minOrderAmount){
             return res.status(400).json({ success: false, message: `Minimum order amount to apply this coupon is 
                 ${coupon.minOrderAmount}`});

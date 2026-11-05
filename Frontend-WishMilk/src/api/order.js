@@ -4,8 +4,7 @@ export const orderApi = {
   create: (payload) => unwrap(axiosClient.post("/orders", payload)),
   myOrders: (params) => unwrap(axiosClient.get("/orders/my-orders", { params })),
   getById: (id) => unwrap(axiosClient.get(`/orders/${id}`)),
-  cancel: (id, cancelReason) =>
-    unwrap(axiosClient.patch(`/orders/${id}/cancel`, { cancelReason })),
+  cancel: (id, cancelReason) => unwrap(axiosClient.patch(`/orders/${id}/cancel`, { cancelReason })),
   reschedule: (id, payload) => unwrap(axiosClient.patch(`/orders/${id}/reschedule`, payload)),
   getActivity: (year) => unwrap(axiosClient.get("/orders/my-activity", { params: { year } })),
 
