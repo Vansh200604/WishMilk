@@ -1,6 +1,7 @@
 import express from "express";
 import {
     createOrder,
+    createCartOrders,
     getMyOrders,
     getOrderById,
     cancelOrder,
@@ -18,6 +19,7 @@ router.use(protect);
 
 // User routes
 router.post("/",                    createOrder);
+router.post("/checkout",            createCartOrders);
 router.get("/my-orders",            getMyOrders);
 router.get("/my-activity",          getMyActivity);
 router.get("/:id",                  getOrderById);

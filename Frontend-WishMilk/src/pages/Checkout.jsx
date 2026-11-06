@@ -1,7 +1,7 @@
 // import { useEffect, useState } from "react";
 // import { useNavigate, Link } from "react-router-dom";
 // import toast from "react-hot-toast";
-// import { MapPin, Plus, Tag, Loader2, Banknote, ShieldCheck } from "lucide-react";
+// import { MapPin, Plus, Tag, Loader2, Banknote, ShieldCheck, Trash2 } from "lucide-react";
 // import { authApi } from "../api/auth.js";
 // import { orderApi } from "../api/order.js";
 // import { couponApi } from "../api/coupon.js";
@@ -60,13 +60,81 @@
 //     // eslint-disable-next-line react-hooks/exhaustive-deps
 //   }, []);
 
+//   // const captureLocation = () => {
+//   //   if (!navigator.geolocation) return;
+//   //   navigator.geolocation.getCurrentPosition(
+//   //     (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
+//   //     () => toast.error("Couldn't access your location")
+//   //   );
+//   // };
+
 //   const captureLocation = () => {
-//     if (!navigator.geolocation) return;
+//     if (!navigator.geolocation) {
+//       toast.error("Location is not supported by your browser");
+//       return;
+//     }
+
+//     toast.loading("Getting your location...", { id: "location" });
+
 //     navigator.geolocation.getCurrentPosition(
-//       (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
-//       () => toast.error("Couldn't access your location")
+//       async (pos) => {
+//         const longitude = pos.coords.longitude;
+//         const latitude = pos.coords.latitude;
+
+//         console.log("Location:", longitude, latitude);
+
+//         setCoords([longitude, latitude]);
+
+//         toast.success("Location captured", { id: "location" });
+
+//         try {
+//           const response = await fetch(
+//             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
+//           );
+
+//           if (!response.ok) {
+//             throw new Error("Reverse geocoding failed");
+//           }
+
+//           const data = await response.json();
+
+//           if (data.display_name) {
+//             setNewAddress((prev) => ({
+//               ...prev,
+//               fullAddress: data.display_name,
+//             }));
+//           }
+//         } catch (error) {
+//           console.error("Address lookup error:", error);
+//           toast.error("Location captured, but couldn't find the address");
+//         }
+//       },
+
+//       (error) => {
+//         console.error("Geolocation error:", error);
+
+//         toast.dismiss("location");
+
+//         if (error.code === 1) {
+//           toast.error("Location permission denied. Please allow location access.");
+//         } else if (error.code === 2) {
+//           toast.error("Location unavailable. Please turn on device location.");
+//         } else if (error.code === 3) {
+//           toast.error("Location request timed out. Please try again.");
+//         } else {
+//           toast.error("Couldn't access your location");
+//         }
+//       },
+
+//       {
+//         enableHighAccuracy: true,
+//         timeout: 15000,
+//         maximumAge: 60000,
+//       }
 //     );
 //   };
+
+  
 
 //   const handleAddAddress = async (e) => {
 //     e.preventDefault();
@@ -81,6 +149,9 @@
 //       setAddresses((prev) => [...prev, res.data]);
 //       setAddressId(res.data._id);
 //       setShowAddAddress(false);
+      
+//       resetAddressForm();
+//       setCoords(null);
 //       toast.success("Address saved");
 //     } catch (err) {
 //       toast.error(err.message);
@@ -89,12 +160,42 @@
 //     }
 //   };
 
+//   const handleRemoveAddress = async (id) => {
+//     try {
+//       await authApi.deleteAddress(id);
+
+//       setAddresses((prev) => prev.filter((a) => a._id !== id));
+
+//       if (addressId === id) {
+//         setAddressId("");
+//       }
+
+//       toast.success("Address removed");
+//     } catch (err) {
+//       toast.error(err.message);
+//     }
+//   };
+
+//   const resetAddressForm = () => {
+//     setNewAddress({
+//       label: "home",
+//       fullAddress: "",
+//     });
+//     setCoords(null);
+//   };
+
 //   const handleApplyCoupon = async () => {
 //     if (!couponCode) return;
 //     setApplyingCoupon(true);
 //     setCouponError("");
 //     try {
-//       const res = await couponApi.apply({ code: couponCode, orderAmount: subtotal });
+//       // The coupon can only be redeemed on one order (see handlePlaceOrder),
+//       // so for multi-item carts the preview is computed against just the
+//       // first item's amount — showing the whole cart's subtotal here would
+//       // overstate the discount that actually gets applied.
+//       const previewAmount = isSingleItem ? subtotal : items[0].pricePerUnit * items[0].quantity;
+      
+//       const res = await couponApi.apply({ code: couponCode, orderAmount: previewAmount });
 //       setCoupon(res.data);
 //       toast.success(`Coupon ${res.data.code} applied`);
 //     } catch (err) {
@@ -105,8 +206,47 @@
 //     }
 //   };
 
-//   const discountRatio = coupon ? coupon.discount / subtotal : 0;
-//   const total = coupon ? coupon.finalAmount : subtotal;
+//   // const handleApplyCoupon = async () => {
+//   //   const code = couponCode.trim().toUpperCase();
+
+//   //   if (!code) {
+//   //       toast.error("Please enter a coupon code");
+//   //       return;
+//   //   }
+
+//   //   // Use the complete cart subtotal, not just the first item.
+//   //   const cartSubtotal = Number(subtotal);
+
+//   //   if (!Number.isFinite(cartSubtotal) || cartSubtotal <= 0) {
+//   //       toast.error("Invalid cart amount");
+//   //       return;
+//   //   }
+
+//   //   setApplyingCoupon(true);
+//   //   setCouponError("");
+
+//   //   try {
+//   //       console.log("Cart items:", items);
+//   //       console.log("Complete cart subtotal:", cartSubtotal);
+
+//   //       const res = await couponApi.apply({
+//   //           code,
+//   //           orderAmount: cartSubtotal
+//   //       });
+
+//   //       setCoupon(res.data);
+
+//   //       toast.success(`Coupon ${res.data.code} applied`);
+
+//   //   } catch (err) {
+//   //       setCoupon(null);
+//   //       setCouponError(err.message);
+//   //   } finally {
+//   //       setApplyingCoupon(false);
+//   //   }
+//   // };
+
+//   const total = coupon ? Math.max(0, subtotal - coupon.discount) : subtotal;
 
 //   const handlePlaceOrder = async () => {
 //     if (!addressId) {
@@ -116,12 +256,14 @@
 //     setPlacing(true);
 //     try {
 //       const createdOrders = [];
-//       for (const item of items) {
-//         const itemTotal = item.pricePerUnit * item.quantity;
-//         const finalItemTotal = coupon
-//           ? Math.max(0, Math.round((itemTotal - itemTotal * discountRatio) * 100) / 100)
-//           : itemTotal;
-
+//       // The coupon can only be redeemed once per checkout, so it's sent
+//       // with the first order — the backend validates and applies it
+//       // server-side there. totalPrice is never sent: the backend computes
+//       // the real price itself from the dairy's pricing, so a tampered
+//       // request can't discount an order beyond what a coupon actually
+//       // allows.
+//       for (let i = 0; i < items.length; i++) {
+//         const item = items[i];
 //         const res = await orderApi.create({
 //           dairy: item.dairyId,
 //           milkType: item.milkId,
@@ -129,14 +271,26 @@
 //           deliveryAddress: addressId,
 //           deliverySlot: slot,
 //           scheduledDate: date,
-//           totalPrice: finalItemTotal,
+//           couponCode: i === 0 ? coupon?.code : undefined,
 //         });
 //         createdOrders.push(res.data);
 //       }
 
-//       if (coupon) {
-//         await couponApi.redeem({ code: coupon.code }).catch(() => {});
-//       }
+//     // const checkoutRes = await orderApi.checkout({
+//     //   items: items.map((item) => ({
+//     //       dairy: item.dairyId,
+//     //       milkType: item.milkId,
+//     //       quantity: item.quantity
+//     //   })),
+
+//     //   deliveryAddress: addressId,
+//     //   deliverySlot: slot,
+//     //   scheduledDate: date,
+
+//     //   couponCode: coupon?.code || null
+//     // });
+
+//     // const createdOrders = checkoutRes.data.orders;
 
 //       const wantsOnline = isSingleItem && paymentChoice === "online";
 
@@ -205,6 +359,18 @@
 //                   <span className="mb-0.5 block font-medium capitalize text-ink">{a.label}</span>
 //                   <span className="text-ink-soft">{a.fullAddress}</span>
 //                 </span>
+
+//                 <button
+//                   type="button"
+//                   onClick={(e) => {
+//                     e.preventDefault();
+//                     e.stopPropagation();
+//                     handleRemoveAddress(a._id);
+//                   }}
+//                   className="ml-auto flex h-8 w-8 flex-none items-center justify-center rounded-lg text-clay hover:bg-clay-light"
+//                 >
+//                   <Trash2 size={16} />
+//                 </button>
 //               </label>
 //             ))}
 
@@ -254,8 +420,16 @@
 //                     <Button type="submit" size="sm" loading={savingAddress}>
 //                       Save address
 //                     </Button>
+
 //                     {addresses.length > 0 && (
-//                       <Button type="button" variant="ghost" size="sm" onClick={() => setShowAddAddress(false)}>
+//                       <Button
+//                         type="button"
+//                         variant="ghost"
+//                         onClick={() => {
+//                           resetAddressForm();
+//                           setShowAddAddress(false);
+//                         }}
+//                       >
 //                         Cancel
 //                       </Button>
 //                     )}
@@ -310,6 +484,11 @@
 //         {coupon && (
 //           <p className="mt-1.5 text-sm text-leaf">
 //             {coupon.code} applied — you save {formatINR(coupon.discount)}
+//           </p>
+//         )}
+//         {!isSingleItem && (
+//           <p className="mt-1.5 text-xs text-ink-faint">
+//             Coupons are applied once to your complete cart subtotal.
 //           </p>
 //         )}
 //       </section>
@@ -397,20 +576,10 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
-import { MapPin, Plus, Tag, Loader2, Banknote, ShieldCheck, Trash2 } from "lucide-react";
+import { MapPin, Plus, Tag, Loader2, Banknote, ShieldCheck } from "lucide-react";
 import { authApi } from "../api/auth.js";
 import { orderApi } from "../api/order.js";
 import { couponApi } from "../api/coupon.js";
@@ -469,81 +638,13 @@ export default function Checkout() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // const captureLocation = () => {
-  //   if (!navigator.geolocation) return;
-  //   navigator.geolocation.getCurrentPosition(
-  //     (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
-  //     () => toast.error("Couldn't access your location")
-  //   );
-  // };
-
   const captureLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Location is not supported by your browser");
-      return;
-    }
-
-    toast.loading("Getting your location...", { id: "location" });
-
+    if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const longitude = pos.coords.longitude;
-        const latitude = pos.coords.latitude;
-
-        console.log("Location:", longitude, latitude);
-
-        setCoords([longitude, latitude]);
-
-        toast.success("Location captured", { id: "location" });
-
-        try {
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-          );
-
-          if (!response.ok) {
-            throw new Error("Reverse geocoding failed");
-          }
-
-          const data = await response.json();
-
-          if (data.display_name) {
-            setNewAddress((prev) => ({
-              ...prev,
-              fullAddress: data.display_name,
-            }));
-          }
-        } catch (error) {
-          console.error("Address lookup error:", error);
-          toast.error("Location captured, but couldn't find the address");
-        }
-      },
-
-      (error) => {
-        console.error("Geolocation error:", error);
-
-        toast.dismiss("location");
-
-        if (error.code === 1) {
-          toast.error("Location permission denied. Please allow location access.");
-        } else if (error.code === 2) {
-          toast.error("Location unavailable. Please turn on device location.");
-        } else if (error.code === 3) {
-          toast.error("Location request timed out. Please try again.");
-        } else {
-          toast.error("Couldn't access your location");
-        }
-      },
-
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 60000,
-      }
+      (pos) => setCoords([pos.coords.longitude, pos.coords.latitude]),
+      () => toast.error("Couldn't access your location")
     );
   };
-
-  
 
   const handleAddAddress = async (e) => {
     e.preventDefault();
@@ -558,9 +659,6 @@ export default function Checkout() {
       setAddresses((prev) => [...prev, res.data]);
       setAddressId(res.data._id);
       setShowAddAddress(false);
-      
-      resetAddressForm();
-      setCoords(null);
       toast.success("Address saved");
     } catch (err) {
       toast.error(err.message);
@@ -569,91 +667,24 @@ export default function Checkout() {
     }
   };
 
-  const handleRemoveAddress = async (id) => {
-    try {
-      await authApi.deleteAddress(id);
-
-      setAddresses((prev) => prev.filter((a) => a._id !== id));
-
-      if (addressId === id) {
-        setAddressId("");
-      }
-
-      toast.success("Address removed");
-    } catch (err) {
-      toast.error(err.message);
-    }
-  };
-
-  const resetAddressForm = () => {
-    setNewAddress({
-      label: "home",
-      fullAddress: "",
-    });
-    setCoords(null);
-  };
-
   const handleApplyCoupon = async () => {
     if (!couponCode) return;
     setApplyingCoupon(true);
     setCouponError("");
     try {
-      // The coupon can only be redeemed on one order (see handlePlaceOrder),
-      // so for multi-item carts the preview is computed against just the
-      // first item's amount — showing the whole cart's subtotal here would
-      // overstate the discount that actually gets applied.
-      const previewAmount = isSingleItem ? subtotal : items[0].pricePerUnit * items[0].quantity;
-      
+      // The coupon is checked against the whole cart total; the backend
+      // shares the discount across the orders when you place them.
+      const previewAmount = subtotal;
       const res = await couponApi.apply({ code: couponCode, orderAmount: previewAmount });
       setCoupon(res.data);
       toast.success(`Coupon ${res.data.code} applied`);
     } catch (err) {
       setCoupon(null);
-      setCouponError(err.message);
+      setCouponError(String(err.message || "").replace(/\s+/g, " ").trim());
     } finally {
       setApplyingCoupon(false);
     }
   };
-
-  // const handleApplyCoupon = async () => {
-  //   const code = couponCode.trim().toUpperCase();
-
-  //   if (!code) {
-  //       toast.error("Please enter a coupon code");
-  //       return;
-  //   }
-
-  //   // Use the complete cart subtotal, not just the first item.
-  //   const cartSubtotal = Number(subtotal);
-
-  //   if (!Number.isFinite(cartSubtotal) || cartSubtotal <= 0) {
-  //       toast.error("Invalid cart amount");
-  //       return;
-  //   }
-
-  //   setApplyingCoupon(true);
-  //   setCouponError("");
-
-  //   try {
-  //       console.log("Cart items:", items);
-  //       console.log("Complete cart subtotal:", cartSubtotal);
-
-  //       const res = await couponApi.apply({
-  //           code,
-  //           orderAmount: cartSubtotal
-  //       });
-
-  //       setCoupon(res.data);
-
-  //       toast.success(`Coupon ${res.data.code} applied`);
-
-  //   } catch (err) {
-  //       setCoupon(null);
-  //       setCouponError(err.message);
-  //   } finally {
-  //       setApplyingCoupon(false);
-  //   }
-  // };
 
   const total = coupon ? Math.max(0, subtotal - coupon.discount) : subtotal;
 
@@ -664,42 +695,23 @@ export default function Checkout() {
     }
     setPlacing(true);
     try {
-      const createdOrders = [];
-      // The coupon can only be redeemed once per checkout, so it's sent
-      // with the first order — the backend validates and applies it
-      // server-side there. totalPrice is never sent: the backend computes
-      // the real price itself from the dairy's pricing, so a tampered
-      // request can't discount an order beyond what a coupon actually
-      // allows.
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i];
-        const res = await orderApi.create({
+      // One request for the whole cart: the backend prices every item
+      // itself, checks the coupon against the cart total, shares the
+      // discount across the orders and creates them all together (all or
+      // nothing). totalPrice is never sent, so a tampered request can't
+      // discount an order beyond what the coupon actually allows.
+      const checkoutRes = await orderApi.checkout({
+        items: items.map((item) => ({
           dairy: item.dairyId,
           milkType: item.milkId,
           quantity: item.quantity,
-          deliveryAddress: addressId,
-          deliverySlot: slot,
-          scheduledDate: date,
-          couponCode: i === 0 ? coupon?.code : undefined,
-        });
-        createdOrders.push(res.data);
-      }
-
-    // const checkoutRes = await orderApi.checkout({
-    //   items: items.map((item) => ({
-    //       dairy: item.dairyId,
-    //       milkType: item.milkId,
-    //       quantity: item.quantity
-    //   })),
-
-    //   deliveryAddress: addressId,
-    //   deliverySlot: slot,
-    //   scheduledDate: date,
-
-    //   couponCode: coupon?.code || null
-    // });
-
-    // const createdOrders = checkoutRes.data.orders;
+        })),
+        deliveryAddress: addressId,
+        deliverySlot: slot,
+        scheduledDate: date,
+        couponCode: coupon?.code,
+      });
+      const createdOrders = checkoutRes.data.orders;
 
       const wantsOnline = isSingleItem && paymentChoice === "online";
 
@@ -768,18 +780,6 @@ export default function Checkout() {
                   <span className="mb-0.5 block font-medium capitalize text-ink">{a.label}</span>
                   <span className="text-ink-soft">{a.fullAddress}</span>
                 </span>
-
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleRemoveAddress(a._id);
-                  }}
-                  className="ml-auto flex h-8 w-8 flex-none items-center justify-center rounded-lg text-clay hover:bg-clay-light"
-                >
-                  <Trash2 size={16} />
-                </button>
               </label>
             ))}
 
@@ -829,16 +829,8 @@ export default function Checkout() {
                     <Button type="submit" size="sm" loading={savingAddress}>
                       Save address
                     </Button>
-
                     {addresses.length > 0 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        onClick={() => {
-                          resetAddressForm();
-                          setShowAddAddress(false);
-                        }}
-                      >
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setShowAddAddress(false)}>
                         Cancel
                       </Button>
                     )}
@@ -897,7 +889,7 @@ export default function Checkout() {
         )}
         {!isSingleItem && (
           <p className="mt-1.5 text-xs text-ink-faint">
-            Coupons are applied once to your complete cart subtotal.
+            The coupon is checked against your whole cart, and the discount is shared across your items.
           </p>
         )}
       </section>
